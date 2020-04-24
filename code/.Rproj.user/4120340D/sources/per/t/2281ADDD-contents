@@ -1,0 +1,1408 @@
+setwd("/Users/iancombs/Desktop/3DAnalysis/Thesis/Publication")
+if (!require("pacman")) install.packages("pacman")
+if (!require("pairwiseAdonis")) p_install_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+if (!require("patchwork")) install.packages("patchwork")
+pacman::p_load(ggplot2, stringr, gridExtra, ggpubr, Rmisc, FSA, 
+               rcompanion, RColorBrewer, dplyr, vegan, nparcomp, 
+               RVAideMemoire, MANOVA.RM, pairwiseAdonis)
+
+
+#------------STATS STATS STATS STATS################################################
+#------------loading and subsetting---------------
+
+corr <- read.csv("total.correlation.csv", head=T)
+str(corr)
+head(corr)
+
+corr$total.colony.size <- corr$total.colony.size*10000
+corr$healthy.area <- corr$healthy.area*10000
+corr$disease.area <- corr$disease.area*10000
+corr$site=factor(corr$site, levels=unique(corr$site)) 
+levels(corr$date)
+corr$date = factor(corr$date, levels(corr$date)[c(3, 4, 1, 2)])
+levels(corr$date)
+
+corr.t1 <- subset(corr, date == '8.24.18')
+corr.t1[] <- lapply(corr.t1, function(x) if(is.factor(x)) factor(x) else x)
+
+corr.t2 <- subset(corr, date == '9.11.18')
+corr.t2[] <- lapply(corr.t2, function(x) if(is.factor(x)) factor(x) else x)
+
+corr.t3 <- subset(corr, date == '11.8.18')
+corr.t3[] <- lapply(corr.t3, function(x) if(is.factor(x)) factor(x) else x)
+
+corr.t4 <- subset(corr, date == '12.17.18')
+corr.t4[] <- lapply(corr.t4, function(x) if(is.factor(x)) factor(x) else x)
+corr.loss <- subset(corr, date != '8.24.18')
+corr.loss[] <- lapply(corr.loss, function(x) if(is.factor(x)) factor(x) else x)
+
+corr.bc1 <- subset(corr, site == 'BC1')
+corr.t328 <- subset(corr, site == 'T328')
+corr.ftl4 <- subset(corr, site == 'FTL4')
+mean(corr.bc1$total.colony.size)
+mean(corr.t328$total.colony.size)
+mean(corr.ftl4$total.colony.size)
+
+
+corr.t1.bc1 <- subset(corr, site == "BC1")
+corr.t1.t328 <- subset(corr, site == 'T328')
+corr.t1.ftl4 <- subset(corr, site == "FTL4")
+
+
+
+
+
+
+
+mean(corr.t1.bc1$total.colony.size)
+mean(corr.t1.t328$total.colony.size)
+mean(corr.t1.ftl4$total.colony.size)
+
+
+# creates a function that forces y axis labels to have 1 decimal place
+scale <- function(x) sprintf("%.0f", x)
+
+#------------Normality Assessment-------
+
+shapiro.total <- shapiro.test(corr$total.colony.size)
+shapiro.total
+shapiro.healthy <-  shapiro.test(corr$healthy.area)
+shapiro.healthy
+shapiro.disease <- shapiro.test(corr$disease.area)
+shapiro.disease
+#------------Cowtag error rates------------
+
+#calculating standard error in cowtag averages
+#first, standard deviation
+
+
+cowtag.sd<-sd(corr$cowtag.area, na.rm = TRUE)
+cowtag.sd
+cowtag.sd/sqrt(95)
+
+
+#------------Friedman's test-------------
+
+corr.t1 <- subset(corr, date == '8.24.18')
+corr.t2 <- subset(corr, date == '9.11.18')
+corr.t3 <- subset(corr, date == '11.8.18')
+corr.t4 <- subset(corr, date == '12.17.18')
+
+corr.bc1 <- subset(corr, site == 'BC1')
+corr.bc1[] <- lapply(corr.bc1, function(x) if(is.factor(x)) factor(x) else x)
+corr.t328 <- subset(corr, site == 'T328')
+corr.t328[] <- lapply(corr.t328, function(x) if(is.factor(x)) factor(x) else x)
+corr.ftl4 <- subset(corr, site == 'FTL4')
+corr.ftl4[] <- lapply(corr.ftl4, function(x) if(is.factor(x)) factor(x) else x)
+
+
+fried.total <- friedman.test(total.colony.size ~ date | colony.id, data = corr)
+fried.total
+#total.colony.list <- cldList(P.adj ~ Comparison, data = total.model.dunn, threshold = 0.05)
+
+
+fried.disease<- friedman.test(disease.area ~ date | colony.id, data = corr)
+fried.disease
+
+fried.healthy <- friedman.test(healthy.area ~ date | colony.id, data = corr)
+fried.healthy
+
+fried.lesion <- friedman.Test()
+
+
+
+#------------Pairwise comparisons for Friedman's test#####
+post.total <- posthoc.friedman.nemenyi.test(total.colony.size ~ date | colony.id, data = corr)
+summary(post.total)
+
+
+# 
+# Pairwise comparisons using Nemenyi multiple comparison test	
+# with q approximation for unreplicated blocked data 
+# 
+# data:  total.colony.size and date and colony.id 
+# 
+# 
+# P value adjustment method: none 
+#          H0              statistic p.value   adjusted p
+# 1  8.24.18  =  9.11.18  4.269075  0.0135      0.018********
+# 2  8.24.18  =  11.8.18  7.589466 4.8e-07      2.88e-06********
+# 3 8.24.18  =  12.17.18  9.012491 1.1e-09      6.60e-09********
+# 4  9.11.18  =  11.8.18  3.320392  0.0875      5.25e-01
+# 5 9.11.18  =  12.17.18  4.743416  0.0044      2.64e-02********
+# 6 11.8.18  =  12.17.18  1.423025  0.7458      1.00e+00
+
+
+
+# #taking p values and adjusting them manually
+total.val <- c(0.0135,4.8e-07, 1.1e-09, 0.0875, 0.0044, 0.7458 )
+
+adjust.total.val <- p.adjust(total.val, method = 'bonferroni')
+#8.10e-02,  2.88e-06 6.60e-09 5.25e-01 2.64e-02 1.00e+00
+#
+total.colony.list <- cldList(P.adj ~ Comparison, data = post.total, threshold = 0.05)
+
+
+
+
+
+
+post.healthy <- posthoc.friedman.nemenyi.test(healthy.area ~ date | colony.id, data = corr)
+summary(post.healthy)
+
+
+# Pairwise comparisons using Nemenyi multiple comparison test	
+# with q approximation for unreplicated blocked data 
+# 
+# data:  healthy.area and date and colony.id 
+# 
+# 
+# P value adjustment method: none 
+#     H0                  statistic p.value     padjust
+# 1  8.24.18  =  9.11.18  4.743416  0.0044      2.640e-02******
+# 2  8.24.18  =  11.8.18  7.115125 2.9e-06      1.740e-05******
+# 3 8.24.18  =  12.17.18  8.380036 1.9e-08      1.140e-07******
+# 4  9.11.18  =  11.8.18  2.371708  0.3358      1.000e+00
+# 5 9.11.18  =  12.17.18  3.636619  0.0497      2.982e-01
+# 6 11.8.18  =  12.17.18  1.264911  0.8078      2.982e-01
+# > 
+
+healthy.val <- c(0.0044, 2.9e-06,  1.9e-08, 0.3358,0.0497, 0.8078 )
+
+adjust.healthy.val <- p.adjust(healthy.val, method = 'bonferroni')
+
+  #[1] 2.640e-02 1.740e-05 1.140e-07 1.000e+00 2.982e-01 1.000e+00
+
+
+post.disease <- posthoc.friedman.nemenyi.test(disease.area ~ date | colony.id, data = corr)
+summary(post.disease)
+
+# Pairwise comparisons using Nemenyi multiple comparison test	
+# with q approximation for unreplicated blocked data 
+# 
+# data:  disease.area and date and colony.id 
+# 
+# 
+# P value adjustment method: none 
+#         H0              statistic p.value   padjust
+# 1  8.24.18  =  9.11.18 1.8973666   0.536    1.000
+# 2  8.24.18  =  11.8.18 0.6324555   0.970    1.000
+# 3 8.24.18  =  12.17.18 3.1622777   0.114    0.684
+# 4  9.11.18  =  11.8.18 1.2649111   0.808    1.000
+# 5 9.11.18  =  12.17.18 5.0596443   0.002    0.012*****
+# 6 11.8.18  =  12.17.18 3.7947332   0.037    0.222
+
+disease.val <- c(0.536, 0.970,  0.114, 0.808,0.002,0.037 )
+
+adjust.disease.val <- p.adjust(disease.val, method = 'bonferroni')
+
+
+
+#------------univariate repeated measures PERMANOVAs-----------------------
+# 
+# run one for each response variable
+set.seed(69420)
+total.rm <- RM(total.colony.size ~ site*date, data=corr, subject="colony.id", resampling="Perm", CPU=8)
+total.rm
+rm.total <- rbind(summary(total.rm))
+write.csv(rm.total, file="total_repeated_measures_outputs.csv")
+disease.rm<- RM(disease.area ~ site*date, data=corr, subject="colony.id", resampling="Perm", CPU=8)
+disease.rm
+rm.disease <- rbind(summary(disease.rm))
+write.csv(rm.disease, file="disease_repeated_measures_outputs.csv")
+healthy.rm <- RM(healthy.area ~ site * date, data=corr, subject="colony.id", resampling="Perm", CPU=8)
+healthy.rm
+rm.healthy <- rbind(summary(healthy.rm))
+
+write.csv(rm.healthy, file="healthy_repeated_measures_outputs.csv")
+
+str(corr)
+corr$time <- as.factor(corr$time)
+#------------Pairwise comparisons-------------------------------
+total.pair <- mctp(total.colony.size ~ time, data=corr, type="Tukey", asy.method="fisher")
+summary(total.pair)
+# 
+disease.pair <- mctp(disease.area ~ date, data=corr, type="Tukey", asy.method="fisher")
+summary(disease.pair)
+
+healthy.pair <- mctp(healthy.area ~ date, data=corr, type="Tukey", asy.method="fisher")
+summary(healthy.pair)
+
+
+#------------PERMANOVA and pairwise comparison-------------------------------
+
+
+set.seed(999)
+perm.total <- adonis(formula = corr[c(5:7)] ~ site * date, data = corr, method = "euclidian")
+perm.total
+perm.pair <- pairwise.adonis(corr[5:7],factors=corr$site,
+                             sim.method='euclidian',p.adjust.m='bonferroni', perm = 999)
+perm.pair
+
+pariwise.perm <- rbind(perm.pair)
+
+write.csv(pariwise.perm, file="pairwise.comp.permanova.csv")
+
+
+
+
+######### Everything is in cm2 escept for total model area which is in m2
+
+#------------Kruskal wallis tests for tag error and total model area with pairwise comparisons-----------
+# Kruskal-Wallis tests for tag error and total model area
+tag.diff.kw <- compare_means(tag.diff ~ site, data=corr, method = "kruskal.test")
+
+# tag.diff.kw
+# # # A tibble: 1 x 6
+# # .y.          p p.adj p.format p.signif method        
+# # <chr>    <dbl> <dbl> <chr>    <chr>    <chr>         
+# #   1 tag.diff 0.979  0.98 0.98     ns       Kruskal-Wallis
+# # > 
+# 
+# 
+total.model.area.kw <- compare_means(total.model.area ~ site, data=corr, method = "kruskal.test")
+total.model.area.kw
+# # A tibble: 1 x 6
+# .y.                    p  p.adj p.format p.signif method
+# <chr>              <dbl>  <dbl> <chr>    <chr>    <chr>
+#   1 total.model.area 0.00157 0.0016 0.0016   **       Kruskal-Wallis
+
+
+kruskal <- rbind(tag.diff.kw,total.model.area.kw)
+write.csv(kruskal, file="Kruskal_total_model_error_outputs.csv")
+
+# pairwise Dunn tests by location
+# KW for tag error not sig., dunn test for total model area
+total.model.dunn <- dunnTest(total.model.area ~ site, data=corr, method = "bh")$res
+total.model.dunn
+
+dunn <- rbind(total.model.dunn)
+write.csv(dunn, file="Dunn_total_model_area_sites_outputs.csv")
+
+# compact letter display for figures
+#tag.diff.list <- cldList(P.adj ~ Comparison, data = tag.diff.dunn, threshold = 1)
+total.model.list <- cldList(P.adj ~ Comparison, data = total.model.dunn, threshold = 0.05)
+
+#Box plot
+#------------Correlation total model and tag error-------------------------------
+
+# testing correlation between size of model (total area) and error associated with shape measurements
+# i.e. if the model area is larger (higher filming altitude), are models worse quality?
+
+# tests correlation between model area and the difference between in-model shape measurements and the template measurements (error)
+cor.test(corr$total.model.area,corr$tag.diff, method="spearman", use="complete.obs")
+
+
+# Spearman's rank correlation rho
+# 
+# data:  corr$total.model.area and corr$tag.diff
+# S = 52437, p-value = 0.1881
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.1569085 
+
+#------------differences between total colony size and tag error-----------------------
+
+# Looking at differences between total colony size and tag error (ie if certain colonies are bigger does it affect the attached cow tag and thus error)
+# Kruskal-Wallis tests for each total colony size and tag error
+total.colony.size.kw <- compare_means(total.colony.size ~ site, data=corr, method = "kruskal.test")
+total.colony.size.kw
+# # A tibble: 1 x 6
+# .y.                    p p.adj p.format p.signif method        
+# <chr>              <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 total.colony.size 0.0188 0.019 0.019    *        Kruskal-Wallis
+
+kruskal <- rbind(tag.diff.kw,total.colony.size.kw
+)
+write.csv(kruskal, file="Kruskal_error_outputs_colony_size.csv")
+
+# pairwise Dunn tests by location for total colony size
+
+
+total.colony.size.dunn <- dunnTest(total.colony.size ~ site, data=corr, method = "bh")$res
+total.colony.size.dunn
+
+
+dunn <- rbind(total.colony.size.dunn)
+write.csv(dunn, file="Dunn_total_colony_size.csv")
+
+# compact letter display for figures
+total.colony.list <- cldList(P.adj ~ Comparison, data = total.colony.size.dunn, threshold = 0.05)
+
+#------------correlation between total colony size and error-----------------
+# testing correlation between total colony size and error associated with shape measurements
+# i.e. if the model area is larger (higher filming altitude), are models worse quality?
+
+# tests correlation between total colony size and the difference between in-model tag measurements and the imageJ measurements (error)
+cor.test(corr$total.colony.size,corr$tag.diff, method="spearman", use="complete.obs")
+
+
+
+# Pearson's product-moment correlation
+# 
+# data:  corr$total.colony.size and corr$tag.diff
+# t = -0.98364, df = 82, p-value = 0.3282
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+# -0.3150900  0.1089272
+# sample estimates:
+# cor 
+# -0.1079899 
+
+
+#------------Kruskal-Wallis tests for each disease area--------------------------------------
+# Kruskal-Wallis tests for each disease area, already claculated total colony size
+disease.area.kw <- compare_means(disease.area ~ site, data=corr, method = "kruskal.test")
+disease.area.kw
+# # A tibble: 1 x 6
+# .y.              p p.adj p.format p.signif method        
+# <chr>        <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 disease.area 0.136  0.14 0.14     ns       Kruskal-Wallis
+# > 
+
+kruskal <- rbind(total.colony.size.kw, disease.area.kw)
+
+write.csv(kruskal, file="Kruskal_outputs_colony_size_disease_area.csv")
+
+# pairwise Dunn tests by location, disease area KW not significant so only running( already run) for total colony size
+
+total.colony.size.dunn <- dunnTest(total.colony.size ~ site, data=corr, method = "bh")$res
+# 
+# # dunn <- rbind(total.colony.size.dunn)
+# write.csv(dunn, file="Dunn_outputs_total_colony_size_disease_area.csv")
+# 
+# # compact letter display for figures
+# total.colony.list <- cldList(P.adj ~ Comparison, data = total.colony.size.dunn, threshold = 0.05)
+
+#------------correlation between total colony size and the difference between disease area---------
+# tests correlation between total colony size and the difference between disease area
+cor.test(corr$total.colony.size,corr$disease.area, method="spearman", use="complete.obs")
+
+
+# 
+# Spearman's rank correlation rho
+# 
+# data:  corr$total.colony.size and corr$disease.area
+# S = 55187, p-value = 0.3459
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.1126939 
+
+#------------KW test for lesion count----------------------------
+# Kruskal-Wallis tests for lesion count
+lesion.count.kw <- compare_means(lesion.count ~ site, data=corr, method = "kruskal.test")
+lesion.count.kw
+# # A tibble: 1 x 6
+# .y.                 p    p.adj p.format p.signif method        
+# <chr>           <dbl>    <dbl> <chr>    <chr>    <chr>         
+#   1 lesion.count 0.000128 0.000130 0.00013  ***      Kruskal-Wallis
+# > 
+kruskal <- rbind(lesion.count.kw, disease.area.kw)
+
+write.csv(kruskal, file="Kruskal_outputs_lesion.count.csv")
+
+# pairwise Dunn tests by location
+
+lesion.count.dunn <- dunnTest(lesion.count ~ site, data=corr, method = "bh")$res
+lesion.count.dunn
+# Comparison          Z      P.unadj        P.adj
+# 1  BC1 - FTL4  0.2386699 8.113616e-01 0.8113615672
+# 2  BC1 - T328 -3.8200616 1.334184e-04 0.0002001275
+# 3 FTL4 - T328 -3.9654148 7.326841e-05 0.0002198052
+
+dunn <- rbind(lesion.count.dunn)
+write.csv(dunn, file="Dunn_outputs_disease_area_lesion_count.csv")
+
+# compact letter display for figures
+lesion.count.list <- cldList(P.adj ~ Comparison, data = lesion.count.dunn, threshold = 0.05)
+
+#------------repeating the same stats and plots with the total colony size and number of lesions------
+
+colonysize.vs.lesioncount<- cor.test(corr$total.colony.size,corr$lesion.count, method="spearman", use="complete.obs")
+
+
+
+# Tests have already been done for the two variables, going straight to plots 
+
+# pairwise Dunn tests by location
+lesion.count.dunn 
+# #   Comparison          Z      P.unadj        P.adj
+# 1  BC1 - FTL4  0.2386699 8.113616e-01 0.8113615672
+# 2  BC1 - T328 -3.8200616 1.334184e-04 0.0002001275
+# 3 FTL4 - T328 -3.9654148 7.326841e-05 0.000219805
+total.colony.size.dunn 
+# Comparison         Z    P.unadj      P.adj
+# 1  BC1 - FTL4  1.235146 0.21677613 0.21677613
+# 2  BC1 - T328 -1.679540 0.09304690 0.13957035
+# 3 FTL4 - T328 -2.847673 0.00440402 0.01321206
+
+dunn <- rbind(lesion.count.dunn, total.colony.size.dunn)
+write.csv(dunn, file="Dunn_outputs_lesion_count_colony_size.csv")
+
+# compact letter display for figures
+total.colony.list <- cldList(P.adj ~ Comparison, data = total.colony.size.dunn, threshold = 0.05)
+lesion.count.list <- cldList(P.adj ~ Comparison, data = lesion.count.dunn, threshold = 0.05)
+
+
+#------------correlation of lesion count and total colony size---------------------
+
+# tests correlation between colony size and lesion numbrer ie do bigger colonies have more lesions
+cor.test(corr$lesion.count,corr$total.colony.size, method="spearman", use="complete.obs")
+
+
+# Spearman's rank correlation rho
+# 
+# data:  corr$lesion.count and corr$total.colony.size
+# S = 49730, p-value = 0.09138
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.2004339 
+
+
+#------------correlation between lesion count and disease area----------------------
+
+# tests correlation between mlesion count and disease area
+cor.test(corr$lesion.count,corr$disease.area, method="spearman", use="complete.obs")
+
+# 
+# Spearman's rank correlation rho
+# 
+# data:  corr$lesion.count and corr$disease.area
+# S = 21460, p-value = 4.332e-10
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.6549652 
+
+dunn.corr.disease <- dunnTest(disease.area ~ lesion.count, data=corr, method = "bh")$res
+
+
+
+
+#------------repeating the same stats and plots with the rate 1 and disease area from T2--------------------------
+
+# repeating the same stats and plots with the rate 1 and disease area from T2
+
+# Need to subset first 
+
+org <- subset(corr, date == '8.24.18')
+corr.r1 <- subset(corr, date == "9.11.18")
+
+names(corr.r1)
+
+
+#------------KW test for r1 -----------------------
+# Kruskal-Wallis tests for each shape
+rate.r1.kw <- compare_means(rate ~ site, data=corr.r1, method = "kruskal.test")
+rate.r1.kw
+# # A tibble: 1 x 6
+# .y.       p p.adj p.format p.signif method        
+# <chr> <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 rate  0.642  0.64 0.64     ns       Kruskal-Wallis
+
+disease.r1.kw <- compare_means(disease.area ~ site, data=corr.r1, method = "kruskal.test")
+disease.r1.kw
+# # A tibble: 1 x 6
+# .y.              p p.adj p.format p.signif method        
+# <chr>        <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 disease.area 0.227  0.23 0.23     ns       Kruskal-Wallis
+write.csv(kruskal, file="Kruskal_outputs_rate.r1.csv")
+
+#NS for KW outputs for disease area and rate, no pairwise comparisons 
+
+
+
+
+
+#------------repeating the same stats and plots with the loss1 and disease area from T2################################
+
+# repeating the same stats and plots with the loss1 and disease area from T2
+
+# Need to subset first 
+
+
+
+
+
+
+
+corr.l1 <- subset(corr, date == "9.11.18")
+
+
+
+
+
+
+
+
+
+
+
+#------------correlation test for r1 and disease area---------------------
+
+# tests correlation between rate1 and disease area at 9.11.18
+cor.test(corr.t2$rate,corr.t2$disease.area, method="spearman", use="complete.obs")
+
+
+
+# Spearman's rank correlation rho
+# 
+# data:  corr.r1$rate and corr.r1$disease.area
+# S = 2222, p-value = 0.8756
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.03391304 
+
+
+
+
+
+
+
+
+#------------corr test for r2 and t3------------------
+
+
+# tests correlation between rate 2 and the disease area from T3
+cor.test(corr.t3$rate,corr.t3$disease.area, method="spearman", use="complete.obs")
+
+
+
+# Spearman's rank correlation rho
+# 
+# data:  corr.r2$rate and corr.r2$disease.area
+# S = 894.69, p-value = 0.001516
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.6110024 
+
+#------------corr test for r3 and t4------------------
+
+
+# tests correlation between rate 2 and the disease area from T3
+cor.test(corr.t4$rate,corr.t4$disease.area, method="spearman", use="complete.obs")
+
+
+# Spearman's rank correlation rho
+# 
+# data:  corr.t2$rate and corr.t2$disease.area
+# S = 2222, p-value = 0.8756
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.03391304 
+
+
+#------------repeating the same stats and plots with the rate 1 and disease area from T2-------------------------------------------------
+
+
+# repeating the same stats and plots with the rate 2 and disease area from T3
+
+# Need to subset first 
+
+
+corr.r2 <- subset(corr, date == "11.8.18")
+
+
+
+names(corr.r2)
+
+
+#------------KW test for R2 and T3------------------------
+# Kruskal-Wallis tests for rate 2 and disease area from T3
+rate.r2.kw <- compare_means(rate ~ site, data=corr.r2, method = "kruskal.test")
+rate.r2.kw
+# ## A tibble: 1 x 6
+# .y.       p p.adj p.format p.signif method        
+# <chr> <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 rate  0.608  0.61 0.61     ns       Kruskal-Wallis
+# > 
+disease.r2.kw <- compare_means(disease.area ~ site, data=corr.r2, method = "kruskal.test")
+disease.r2.kw
+# A tibble: 1 x 6
+# .y.              p p.adj p.format p.signif method        
+# <chr>        <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 disease.area 0.332  0.33 0.33     ns       Kruskal-Wallis
+
+
+
+write.csv(kruskal, file="Kruskal_outputs_rate.r2.csv")
+
+\
+
+
+#------------KW test for L1 and site-----------------------
+# Kruskal-Wallis tests for each shape
+rate.l1.kw <- compare_means(loss ~ site, data=corr.t2, method = "kruskal.test")
+rate.l1.kw
+# # A tibble: 1 x 6
+# .y.       p p.adj p.format p.signif method        
+# <chr> <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 loss  0.234  0.23 0.23     ns       Kruskal-Wallis
+
+
+
+total.l1.kw <- compare_means(total.colony.size ~ site, data=corr.t2, method = "kruskal.test")
+total.l1.kw
+# # A tibble: 1 x 6
+# .y.                   p p.adj p.format p.signif method
+# <chr>             <dbl> <dbl> <chr>    <chr>    <chr>
+#   1 total.colony.size 0.246  0.25 0.25     ns       Kruskal-Wallis
+write.csv(kruskal, file="Kruskal_outputs_rate.l1.csv")
+
+#NS for KW outputs for disease area and rate, no pairwise comparisons 
+
+#------------correlation test between l1 and t2-----------------------
+
+# tests correlation between area lost and total colony size at 9.11.18
+cor.test(corr.t2$loss,corr.t2$total.colony.size, method="spearman", use="complete.obs")
+
+
+# Spearman's rank correlation rho
+# 
+# data:  corr.l1$loss and corr.l1$total.colony.size
+# S = 3336, p-value = 0.02834
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# -0.4504348 
+
+
+
+
+
+#------------KW for l2 and T3--------------------------
+# Kruskal-Wallis tests for rate 2 and disease area from T3\
+loss.l2.kw <- compare_means(loss ~ site, data=corr.t3, method = "kruskal.test")
+loss.l2.kw
+# # A tibble: 1 x 6
+# .y.       p p.adj p.format p.signif method        
+# <chr> <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 rate  0.544  0.54 0.54     ns       Kruskal-Wallis
+total.l2.kw <- compare_means(total.colony.size ~ site, data=corr.t3, method = "kruskal.test")
+total.l2.kw
+
+# # A tibble: 1 x 6
+# .y.              p p.adj p.format p.signif method        
+# <chr>        <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 disease.area 0.329  0.33 0.33     ns       Kruskal-Wallis
+
+
+
+write.csv(kruskal, file="Kruskal_outputs_rate.l2.csv")
+
+
+
+#------------corr test for l2 and t3-------------------------
+
+
+# tests correlation between rate 2 and the disease area from T3
+cor.test(corr.t3$loss,corr.t3$total.colony.size, method="spearman", use="complete.obs")
+
+
+# Spearman's rank correlation rho
+# 
+# data:  corr.l2$loss and corr.l2$total.colony.size
+# S = 2089, p-value = 0.6698
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+# rho 
+# 0.09175908 
+
+#------------KW for L3 and site-------------------------
+
+total.l3.kw <- compare_means(loss ~ site, data=corr.t4, method = "kruskal.test")
+total.l3.kw
+
+
+
+#------------corr test for l3 and t4-------------------------
+
+cor.test(corr.t4$loss,corr.t4$total.colony.size, method="spearman", use="complete.obs")
+
+#------------KW for tissue loss rates-------------------------
+
+corr.loss <- subset(corr, date != '8.24.18')
+corr.loss[] <- lapply(corr.loss, function(x) if(is.factor(x)) factor(x) else x)
+corr.loss.kw <- compare_means(loss ~ date, data=corr.loss, method = "kruskal.test")
+corr.loss.kw
+
+corr.loss.dunn <- dunnTest(loss ~ date, data=corr.loss, method = "bh")$res
+corr.loss.dunn
+
+#---------Tissue loss means--------------
+
+loss.mean.t2 <- mean(corr.t2$loss)
+loss.mean.t2
+loss.mean.t3 <- mean(corr.t3$loss)
+loss.mean.t3
+loss.mean.t4 <- mean(corr.t4$loss)
+loss.mean.t4
+
+
+
+
+#####################PLOTS PLOTS PLOTS PLOTS###############################################
+#------------Box Plot for Tag error  and total model boxplot-------------
+corr$site=factor(corr$site, levels=unique(corr$site)) 
+
+# creates a function that forces y axis labels to have 1 decimal place
+
+# boxplots comparing shape areas to template
+tag.diff.box.1 <- ggplot(data = corr, aes(x = date, y = tag.diff))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = 'black')+
+  geom_point(aes(fill = site), color = 'black', size = 3, position = position_jitterdodge())+
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  scale_x_discrete(labels = c(expression('T'[1]), expression('T'[2]), expression('T'[3]), expression('T'[4])))+
+  labs(x = "Time", y = bquote('Cattle Tag Error'~(cm^2)), fill = 'Site')+
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+  
+tag.diff.box.1
+
+
+tag.diff.box <- tag.diff.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'),
+  plot.margin = unit(c(0.5, 0, .5, 1), "cm"))+rremove('legend')
+tag.diff.box
+
+
+# boxplots comparing shape areas to template
+total.model.box.1 <- ggplot(data = corr, aes(x = date, y = total.model.area))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = 'black')+
+  geom_point(aes(fill = site), color = 'black', size = 3, position = position_jitterdodge())+
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  scale_x_discrete(labels = c(expression('T'[1]), expression('T'[2]), expression('T'[3]), expression('T'[4])))+
+  labs(x = "Time",
+       y = bquote("Model Area"~ (m^2)),
+       fill = 'Site') + 
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_text(color = "black", size = 25),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+total.model.box.1
+
+total.model.box <- total.model.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"))+ rremove('legend')
+total.model.box
+
+#------------correlation plots comparing shape error to overall model area------------------
+# correlation plots comparing shape error to overall model area
+
+# makes a scatterplot of correlation
+corr.tag.1 <- ggplot(corr, aes(x = total.model.area, y = tag.diff, color = site)) +
+  geom_point(size = 5)+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"), name = "Site")+
+  labs(x = bquote('Model Area'~(m^2)), y = bquote('Shape Error'~(cm^2)))+
+  scale_y_continuous(labels = scale)+
+  guides(color = guide_legend(override.aes = list(size = 8, shape = 15)))+
+  theme(legend.title = element_text(color = "black", size = 24),
+        legend.text = element_text(color = "black", size = 24),
+        legend.key = element_blank(),
+        legend.background = element_blank())
+corr.tag.1
+
+# takes the legend and saves it as a separate object (grob)
+get_legend<-function(corr.tag.1){
+  tmp <- ggplot_gtable(ggplot_build(corr.tag.1))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  corr.legend <- tmp$grobs[[leg]]
+  return(corr.legend)
+}
+corr.legend=get_legend(corr.tag.1)
+
+# removes legend
+corr.tag <- corr.tag.1+
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+        panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"),
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'), 
+        plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"))
+  # rremove("legend")
+
+corr.tag
+#------------box plot between total colony size and tag error------------------------
+
+# boxplots comparing shape areas to template
+tag.colony.box.1 <-
+  ggplot(data = corr, aes(x = date, y = total.colony.size))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
+  scale_x_discrete(labels = c(expression('T'[1]), expression('T'[2]), expression('T'[3]), expression('T'[4])))+
+  labs(x = "Time", y = bquote("Total Colony Area" ~ (cm^2)),fill = 'Site') +
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+tag.colony.box.1
+
+tag.colony.box <- tag.colony.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"))+ 
+  rremove("legend")
+
+tag.colony.box
+#------------box plot of healthy tissue area--------------------
+healthy.colony.box.1 <-
+  ggplot(data = corr, aes(x = date, y = healthy.area))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
+  scale_x_discrete(labels = c(expression('T'[1]), expression('T'[2]), expression('T'[3]), expression('T'[4])))+
+  labs(x = "Time", y = bquote("Healthy Tissue Area" ~ (cm^2)),fill = 'Site') +
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+healthy.colony.box.1
+
+healthy.colony.box <- healthy.colony.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 0.5), "cm"))+ 
+  rremove("legend")
+
+healthy.colony.box
+#------------correlation plots comparing shape error to overall model are--------------
+# correlation plots comparing shape error to overall model area
+# makes a scatterplot of correlation
+corr.tag.colony.size.1 <-ggplot(corr, aes(x = total.colony.size, y = tag.diff, color = site))+
+  geom_point(size = 5)+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Cattle Tag Error'~(cm^2)))+
+  scale_y_continuous(labels = scale)
+
+corr.tag.colony.size <- corr.tag.colony.size.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 1.75), "cm"))+
+  rremove("legend")
+corr.tag.colony.size 
+
+
+#------------MULTIPLOT FOR TAG VALIDATION------------------
+
+
+
+# valid.plots <- ggarrange(total.model.box, tag.colony.box, tag.diff.box, corr.tag, corr.tag.colony.size, corr.legend, 
+#                          ncol = 3, nrow =2, 
+#                          widths = c(10,10.5,10), heights = c(5,5),
+#                          labels = c("a", "b", "c", "d", "e", ""), align = "v",
+#                          font.label = list(size = 22, color = "black", face ="bold"))
+# 
+# valid.plots
+
+valid.plots.patch <- total.model.box + tag.colony.box + tag.diff.box + corr.tag + corr.tag.colony.size + guide_area() + plot_layout(guides = 'collect')+plot_annotation(tag_levels = 'a')
+ggsave("validation.plots.tiff", plot= valid.plots.patch, width=22, height=10, units="in", dpi=600)
+
+
+#------------box plot of disease areas-------------------------
+
+
+# boxplots comparing shape areas to template
+disease.area.box.1 <-
+  ggplot(data = corr, aes(x = date, y = disease.area))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
+  scale_x_discrete(labels = c(expression('T'[1]), expression('T'[2]), expression('T'[3]), expression('T'[4])))+
+  labs(x = "Time", y = bquote('Disease Lesion Area'~(cm^2)), fill = 'Site') + 
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+disease.area.box.1
+
+disease.area.box <- disease.area.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"))+ 
+  rremove("legend")
+
+disease.area.box
+
+#------------correlation plots comparing total colony size and disease area-------------
+# correlation plots comparing shape error to overall model area
+
+# makes a scatterplot of correlation
+colony.size.disease.area.1 <-ggplot(corr, aes(x = total.colony.size, y = disease.area, color = site))+
+  geom_point(size = 5)+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Total Colony Area'~(cm^2)), y = bquote('Disease Lesion Area'~(cm^2))) +
+  scale_y_continuous(labels = scale)
+colony.size.disease.area.1
+
+
+colony.size.disease.area <- colony.size.disease.area.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 1.5), "cm"))+
+  rremove("legend")
+colony.size.disease.area 
+  
+  
+
+
+#------------box plot of lesion count---------------------------
+
+# boxplots comparing shape areas to template
+lesion.count.box.1 <- ggplot(data = corr, aes(x = date, y = lesion.count))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
+  scale_x_discrete(labels = c(expression('T'[1]), expression('T'[2]), expression('T'[3]), expression('T'[4])))+
+  labs(x = "Site", y = "Number of Lesions", fill = 'Site') + 
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+lesion.count.box.1
+
+lesion.count.box <- lesion.count.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+ 
+  rremove("legend")
+
+lesion.count.box
+  
+  
+  
+  
+  
+ 
+#------------correlation plot of disease area and lesion count-----------------------
+# correlation plots comparing number of disease lesions to overall disease area
+
+
+# makes a scatterplot of correlation
+lesion.count.disease.area.1 <-ggplot(corr, aes(x = disease.area, y = lesion.count, color = site))+
+  geom_point(size = 5)+
+  geom_smooth(method = "lm", fill = 'grey30', color = 'grey30')+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Disease Lesion Area'~(cm^2)), y = "Lesion Count") +
+  scale_y_continuous(labels = scale)
+lesion.count.disease.area.1
+
+
+lesion.count.disease.area <- lesion.count.disease.area.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 1.57), "cm"))+
+  rremove("legend")
+lesion.count.disease.area 
+
+#------------disease lesions to total colony area correlation plots-------------
+# correlation plots comparing number of disease lesions to total colony area
+
+corr$site=factor(corr$site, levels=unique(corr$site)) 
+
+# makes a scatterplot of correlation
+lesion.count.colony.size.1 <-ggplot(corr, aes(x = total.colony.size, y = lesion.count, color = site))+
+  geom_point(size = 5)+
+  #geom_smooth(method = "lm", fill = 'grey30', color = 'grey30')+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Total Colony Area'~(cm^2)), y = "Lesion Count") +
+  scale_y_continuous(labels = scale)
+  lesion.count.colony.size.1
+
+
+  lesion.count.colony.size <- lesion.count.colony.size.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 2.25), "cm"))
+  #rremove("legend")
+  lesion.count.colony.size 
+
+#------------MULTIIPLOT FOR LESION-------------------
+
+
+
+# lesion.plots <- ggarrange(tag.colony.box, disease.area.box, lesion.count.box, healthy.colony.box, colony.size.disease.area, lesion.count.disease.area, lesion.count.colony.size,
+#                           ncol = 2, nrow = 4, 
+#                           widths = c(4, 4), heights = c(4,4,4,4),
+#                           labels = c("a","b","c","d","e","f","g",""), align = "v",
+#                           font.label = list(size = 22, color = "black", face ="bold"))
+# 
+#   lesion.plots
+
+lesion.plots.patch <- tag.colony.box + healthy.colony.box + disease.area.box + lesion.count.box+ colony.size.disease.area + lesion.count.disease.area + lesion.count.colony.size + guide_area() + plot_layout(nrow = 4, guides = 'collect')+plot_annotation(tag_levels = 'a')
+ggsave("lesion.plots.tiff",  plot= lesion.plots.patch, width=20, height=20, units="in", dpi=600)
+
+
+
+
+
+
+
+#------------box plot for r1 and r2-------------------------
+corr.r1 <- subset(corr, date != "8.24.18")
+# boxplots comparing shape areas to template
+rate.r1.box.1 <- ggplot(data = corr.loss, aes(x = date, y = rate))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
+  scale_x_discrete(labels = c(expression('T'[2]), expression('T'[3])), expression('T'[4]))+
+  labs(x = "Site", y = bquote('Change in Disease Lesion Area'~(cm^2/wk)), fill = 'Site') +
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+rate.r1.box.1
+
+rate.r1.box <- rate.r1.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 16, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+ 
+  rremove("legend")
+
+rate.r1.box
+
+
+#------------correlation plot for r1 and disease area from t2--------------------
+# correlation plots comparing number of disease lesions to overall disease area
+
+
+# makes a scatterplot of correlation
+corr.r1.disease.area.1 <-ggplot(corr.t2, aes(x = disease.area, y = rate, color = site))+
+  geom_point(size = 5)+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Disease Lesion Area'~(cm^2)), y = bquote('Change in Disease Lesion Area'~(cm^2/wk))) +
+  scale_y_continuous(labels = scale)
+corr.r1.disease.area.1
+
+
+corr.r1.disease.area <- corr.r1.disease.area.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 16, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 1.5), "cm"))+
+  rremove("legend")
+corr.r1.disease.area 
+
+
+
+#------------corr plot for R2 and T2 disease area-----------------------
+# correlation plots comparing number of disease lesions to overall disease area
+
+# makes a scatterplot of correlation
+r2.disease.area.1 <-ggplot(corr.t3, aes(x = disease.area, y = rate, color = site))+
+  geom_point(size = 5)+
+  geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Disease Lesion Area'~(cm^2)), y = bquote('Change in Disease Lesion Area'~(cm^2/wk))) +
+  scale_y_continuous(labels = scale)
+r2.disease.area.1
+
+
+r2.disease.area <- r2.disease.area.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 16, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))+
+  rremove("legend")
+r2.disease.area 
+#---------------corr plot for r3 and t4
+r3.disease.area.1 <-ggplot(corr.t4, aes(x = disease.area, y = rate, color = site))+
+  geom_point(size = 5)+
+  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Disease Lesion Area'~(cm^2)), y = bquote('Change in Disease Lesion Area'~(cm^2/wk))) +
+  scale_y_continuous(labels = scale)
+r3.disease.area.1
+
+
+r3.disease.area.1 <- r3.disease.area.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 16, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))
+  #rremove("legend")
+r3.disease.area.1 
+
+#------------Multi plot Change in disease --------------
+
+disease.change.patch <-(rate.r1.box + corr.r1.disease.area) / (r2.disease.area + r3.disease.area.1) +  plot_layout(guides = 'collect')+plot_annotation(tag_levels = 'a')
+disease.change.patch
+
+
+ggsave("disease.change.plots.tiff", plot= disease.change.patch, width=15, height=10, units="in", dpi=600)
+
+
+
+
+
+
+#------------box plot for L1---------------------------
+# boxplots comparing shape areas to template
+rate.l1.box.1 <- ggplot(data = corr.loss, aes(x = date, y = loss))+
+  geom_boxplot(aes(fill = date), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = date), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
+  scale_x_discrete(labels = c(expression('T'[2]), expression('T'[3]), expression('T'[4])))+
+  labs(x = "Time", y = bquote('Tissue Loss'~(cm^2/wk)), fill = 'Site') +
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())
+  #facet_grid(.~site,scales="free")
+rate.l1.box.1
+
+rate.l1.box <- rate.l1.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 16, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+ 
+  rremove("legend")
+
+rate.l1.box.1
+ggsave("loss.box.tiff", plot= rate.l1.box.1, width=15, height=10, units="in", dpi=600)
+
+
+#------------cor plot for L1 and T2------------------------
+# correlation plots comparing area lost to total colony size
+# makes a scatterplot of correlation
+l1.total.colony.size.1 <-ggplot(corr.t2, aes(x = total.colony.size, y = loss, color = site))+
+  geom_point(size = 5)+
+  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T2'~(cm^2/wk))) +
+  scale_y_continuous(labels = scale)
+l1.total.colony.size.1
+
+
+l1.total.colony.size <- l1.total.colony.size.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 16, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))
+  # rremove("legend")
+l1.total.colony.size
+  
+
+
+#------------corr plot for l2 and t3---------------------------
+# correlation plots comparing number of disease lesions to overall disease area
+
+# makes a scatterplot of correlation
+l2.total.colony.size.1 <-ggplot(corr.t3, aes(x = total.colony.size, y = loss, color = site))+
+  geom_point(size = 5)+
+  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T3'~(cm^2/wk))) +
+  scale_y_continuous(labels = scale)
+l2.total.colony.size.1
+
+
+l2.total.colony.size <- l2.total.colony.size.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 16, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))+
+  rremove("legend")
+l2.total.colony.size
+  
+#------------box plot for l3 and t4--------------------------
+rate.l3.box.1 <- ggplot(data = corr.t4, aes(x = date, y = loss))+
+  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
+  scale_x_discrete(labels = c(expression('T'[2]), expression('T'[3])))+
+  labs(x = "Time", y = bquote('Tissue Loss'~(cm^2/wk)), fill = 'Site') +
+  scale_y_continuous(labels = scale)+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(color = "black", size = 25),
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
+rate.l3.box.1
+
+rate.l3.box <- rate.l3.box.1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=12, color="black"), 
+  axis.text.y=element_text(size=12, color="black"),
+  axis.title.y = element_text(size = 16, color = 'black'),
+  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+ 
+  rremove("legend")
+
+rate.l3.box
+
+#------------corr plot for l3 and t4--------------------------
+l3.total.colony.size.1 <-ggplot(corr.t4, aes(x = total.colony.size, y = loss, color = site))+
+  geom_point(size = 5)+
+  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T4'~(cm^2/wk))) +
+  scale_y_continuous(labels = scale)
+l2.total.colony.size.1
+
+
+l3.total.colony.size <- l3.total.colony.size.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=15, color="black"), 
+        axis.text.x=element_text(size=12, color="black"), 
+        axis.text.y=element_text(size=12, color="black"),
+        axis.title.y = element_text(size = 16, color = 'black'),
+        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))+
+  rremove("legend")
+l3.total.colony.size
+
+#------------Loss Plots--------------------------
+loss.plots.patch <-(rate.l1.box + l1.total.colony.size) / (l2.total.colony.size + l3.total.colony.size) + plot_layout(guides = 'collect')+plot_annotation(tag_levels = 'a')
+loss.plots.patch
+
+ggsave("loss.plots.tiff", plot= loss.plots.patch, width=15, height=10, units="in", dpi=600)
+
+
+
+
+
+
+
+
+#------------Multi plot (unused)--------------------------
+# multiplot of all generated figures
+
+multiplot=grid.arrange(tag.diff.box, tag.colony.box, disease.area.box, lesion.count.box, rate.r1.box, rate.r2.box, corr.tag, corr.tag.colony.size, colony.size.disease.area,lesion.count.disease.area, lesion.count.colony.size, r1.disease.area, r2.disease.area, legend, ncol=3, nrow=5, layout_matrix=rbind(c(1,2,3),c(4,5,6),c(7,8,9),c(10,11,12), c(13,14,14)), widths=c(3.1,3,3), heights=c(2,2,2,2,0.25))
+
+ggsave("model_error_and_correlation_panel.pdf", plot= multiplot, width=12, height=12, units="in", dpi=300)
+
+multiplot1=grid.arrange(tag.diff.box, tag.colony.box, disease.area.box, lesion.count.box, rate.r1.box, rate.r2.box, legend, ncol=3, nrow=3, layout_matrix=rbind(c(1,2,3),c(4,5,6),c(7,7,7)), widths=c(3.1,3,3), heights=c(2,2,0.25))
+multiplot1
+
+multiplot2=grid.arrange(corr.tag, corr.tag.colony.size, colony.size.disease.area,lesion.count.disease.area, lesion.count.colony.size, r1.disease.area, r2.disease.area, legend, ncol=4, nrow=2, layout_matrix=rbind(c(1,2,3,4),c(5,6,7,8)), widths=c(3,3,3,3), heights=c(2,2))
+
+multiplot2
+
