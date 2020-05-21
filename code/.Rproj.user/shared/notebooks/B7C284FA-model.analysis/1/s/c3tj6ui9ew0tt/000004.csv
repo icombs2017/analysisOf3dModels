@@ -1,7 +1,0 @@
-"0","if (!require(""pacman"")) install.packages(""pacman"")
-"
-"2","Loading required package: pacman
-"
-"2","package ‘pacman’ was built under R version 3.5.2"
-"0","pacman::p_load(ggplot2, stringr, gridExtra, ggpubr, Rmisc, FSA, rcompanion, RColorBrewer, dplyr, vegan, nparcomp, RVAideMemoire, MANOVA.RM, pairwiseAdonis, PMCMR, PMCMRplus)"
-"0","pacman::p_load_gh(""pmartinezarbizu/pairwiseAdonis/pairwiseAdonis"")"

@@ -1,4 +1,0 @@
-"0","lesion.plots.patch <- total.colony.box + healthy.colony.box + disease.area.box + lesion.count.box + colony.size.disease.area + lesion.count.disease.area + lesion.count.colony.size + guide_area() + plot_layout(nrow = 4, guides = 'collect')+plot_annotation(tag_levels = 'a')
-"
-"2","Error: object 'lesion.count.colony.size' not found
-"
