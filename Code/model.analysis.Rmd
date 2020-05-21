@@ -6,7 +6,7 @@ output:
     theme: flatly
     code_folding: show
     toc: yes
-    toc_depth: yes
+    toc_depth: 3
     toc_float: yes
   pdf_doctument:
       toc: yes
@@ -36,7 +36,7 @@ This is the analysis pipeline to analyze data generated from 3D models of fate t
 # Basic setup of R environment
 ***
 ## Loading required packages
-For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some must be downloaded from GitHub. We can use the following code to laod in the packages and install any packages not previously installed in the R console. 
+For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some must be downloaded from GitHub. We can use the following code to ld in the packages and install any packages not previously installed in the R console. 
 
 ```{r,packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 #setwd("link to github")
@@ -69,20 +69,20 @@ levels(corr$date)
 
 # Subsetting by timepoint, and then resetting the factor level for each timepoint
 corr.t1 <- subset(corr, date == '8.24.18')
-corr.t1[] <- lapply(corr.t1, function(x) if(is.factor(x)) factor(x) else x)
+droplevels(corr.t1$date)
 
 corr.t2 <- subset(corr, date == '9.11.18')
-corr.t2[] <- lapply(corr.t2, function(x) if(is.factor(x)) factor(x) else x)
+droplevels(corr.t2$date)
 
 corr.t3 <- subset(corr, date == '11.8.18')
-corr.t3[] <- lapply(corr.t3, function(x) if(is.factor(x)) factor(x) else x)
+droplevels(corr.t3$date)
 
 corr.t4 <- subset(corr, date == '12.17.18')
-corr.t4[] <- lapply(corr.t4, function(x) if(is.factor(x)) factor(x) else x)
+droplevels(corr.t4$date)
 
 # This will be used when we analyze rates of loss and disease progression
 corr.loss <- subset(corr, date != '8.24.18')
-corr.loss[] <- lapply(corr.loss, function(x) if(is.factor(x)) factor(x) else x)
+droplevels(corr.loss$date)
 
 
 
@@ -299,6 +299,15 @@ lesionarea.vs.lesioncount
 The number of disease lesions were positively correlated with the amount of disease lesion tissue area. However, colony size was not correlated with disease lesion area or the number of disease lesions. So, bigger colonies have no more (or less) disease than smaller colonies. 
 <br><br>
 
+# Analysis of Lesion Count using Kruskal-Wallis and Dunn's Test
+***
+## Looking at differences of lesion count among site.
+```{r, lesion count analyses, warning = FALSE, include = TRUE}
+kruskal.test(lesion.count ~ site, data = corr)
+
+dunnTest(lesion.count ~ site, data = corr, method = 'bh')
+
+```
 # Plotting
 ***
 ## We are now going to make a number of box plots and correlation plots to visualize the data we just analyzed. I will display the code for one of each (as the code is the same just replacing variable names) and then I will compile the plots using the R package *patchwork*.
@@ -534,11 +543,13 @@ ggsave("../figures/lesion.plots.tiff",  plot= lesion.plots.patch, width=20, heig
 ## Rates of loss were calculated between timepoints, looking at correlations. Kruskal-Wallis Rank Sum Tests were used to determine if rates of loss varied by site, and correlation analyses were used to determine if colony metrics were related to rates of tissue loss. 
 
 ```{r, loss.kw, include = TRUE }
-rate.l1.kw <- compare_means(loss ~ site, data=corr.t2, method = "kruskal.test")
+rate.l1.kw <- kruskal.test(loss ~ site, data = corr.t2)
 rate.l1.kw
-rate.l2.kw <- compare_means(loss ~ site, data=corr.t3, method = "kruskal.test")
+
+rate.l2.kw <- kruskal.test(loss ~ site, data=corr.t3)
 rate.l2.kw
-rate.l3.kw <- compare_means(loss ~ site, data=corr.t4, method = "kruskal.test")
+
+rate.l3.kw <- kruskal.test(loss ~ site, data=corr.t4)
 rate.l3.kw
 ```
 
