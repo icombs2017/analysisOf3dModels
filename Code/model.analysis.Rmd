@@ -23,7 +23,7 @@ library(magrittr)
 -->
 
 
-#### [GitHub repository](https://github.com/icombs2017/Analysis-of-Fate-Tracked-Montastraea-cavernosa-Colonies.git){target="_blank"}
+#### [GitHub repository](https://github.com/icombs2017/analysisOf3dModels.git){target="_blank"}
 
 
 ###
