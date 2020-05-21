@@ -531,7 +531,7 @@ colony.size.disease.area
 lesion.plots.patch <- total.colony.box + healthy.colony.box + disease.area.box + lesion.count.box + colony.size.disease.area + lesion.count.disease.area + lesion.count.colony.size + guide_area() + plot_layout(nrow = 4, guides = 'collect')+plot_annotation(tag_levels = 'a')
 
 ## Save
-ggsave("../figures/lesion.plots.tiff",  plot= lesion.plots.patch, width=20, height=20, units="in", dpi=600)
+ggsave("../figures/lesion.plots.png",  plot= lesion.plots.patch, width=20, height=20, units="in", dpi=600)
 
 ```
 
@@ -727,7 +727,7 @@ l3.total.colony.size
 loss.plots.patch <-(rate.l1.box + l1.total.colony.size) / (l2.total.colony.size + l3.total.colony.size) + plot_layout(guides = 'collect')+plot_annotation(tag_levels = 'a')
 loss.plots.patch
 
-ggsave("../figures/loss.plots.tiff", plot= loss.plots.patch, width=15, height=10, units="in", dpi=600)
+ggsave("../figures/loss.plots.png", plot= loss.plots.patch, width=15, height=10, units="in", dpi=600)
 
 ```
 
