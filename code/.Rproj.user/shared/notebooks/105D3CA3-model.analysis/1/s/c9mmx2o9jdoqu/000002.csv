@@ -1,0 +1,4 @@
+"0","#setwd(""link to github"")"
+"0","if (!require(""pacman"")) install.packages(""pacman"")"
+"0","pacman::p_load(ggplot2, stringr, gridExtra, ggpubr, Rmisc, FSA, rcompanion, RColorBrewer, dplyr, vegan, nparcomp, RVAideMemoire, MANOVA.RM, pairwiseAdonis, PMCMR, PMCMRplus, patchwork)"
+"0","pacman::p_load_gh(""pmartinezarbizu/pairwiseAdonis/pairwiseAdonis"")"

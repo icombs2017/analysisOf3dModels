@@ -1,0 +1,6 @@
+"0","colony.size.disease.area.1 <-ggplot(corr, aes(x = total.colony.size, y = disease.area, color = site))+"
+"0","  geom_point(size = 5)+"
+"0","  scale_color_manual(values = c(""#7BA46C"", ""#EACF9E"", ""#008D91""))+"
+"0","  labs(x = bquote('Total Colony Area'~(cm^2)), y = bquote('Disease Lesion Area'~(cm^2))) +"
+"0","  scale_y_continuous(labels = scale)"
+"0","colony.size.disease.area.1"

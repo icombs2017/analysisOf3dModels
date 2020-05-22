@@ -49,7 +49,7 @@ pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
 # Loading and subsetting
 ***
-## Loading the dataset into R, and subsetting as needed, we will be making multiple subsets, subsetting by time point and by site to make things easier to workwith. 
+Loading the dataset into R, and subsetting as needed, we will be making multiple subsets, subsetting by time point and by site to make things easier to workwith. 
 
 ```{r, load and subset, include = 'true', results = 'hide'}
 corr <- read.csv("../data/total.correlation.csv", head=T)
@@ -111,7 +111,7 @@ mean(corr.t1.ftl4$total.colony.size)
 
 # Assessing normality
 ***
-## A Shapiro-Wilk Normality Test will be run on our 3 main variables to assess normality
+A Shapiro-Wilk Normality Test will be run on our 3 main variables to assess normality
 
 ```{r, normality, include = 'true'}
 shapiro.total <- shapiro.test(corr$total.colony.size)
@@ -129,7 +129,7 @@ shapiro.disease
 
 # Friedman Rank Sum Test
 ***
-## Performs a Friedman rank sum test with unreplicated blocked data on the three major area measurments: total colony area, healthy tissue area, and lesion area. 
+Performs a Friedman rank sum test with unreplicated blocked data on the three major area measurments: total colony area, healthy tissue area, and lesion area. 
 
 
 ```{r, Friedman, include = 'true'}
@@ -150,7 +150,7 @@ fried.lesion
 
 # Pairwise Comparisons using the Nemenyi test
 ***
-## Pairwise comparisons of significant Friedman's tests and manually adjusting the p values using a Bonferroni correction
+Pairwise comparisons of significant Friedman's tests and manually adjusting the p values using a Bonferroni correction
 
 ```{r, Nemenyi, include = 'true', results = 'hide'}
 # Total colony size
@@ -246,7 +246,7 @@ adjust.disease.val <- p.adjust(disease.val, method = 'bonferroni')
 
 #Running PERMANOVA in R
 ***
-## We will be using the ```adonis()``` function in *vegan*. We will run a total of 999 permutations and test the effects of site, time, and the interaction between the two factors.
+We will be using the ```adonis()``` function in *vegan*. We will run a total of 999 permutations and test the effects of site, time, and the interaction between the two factors.
 
 
 ```{r, PERMANOVA, include = TRUE}
@@ -261,7 +261,7 @@ PERMANOVA reveals that Site has a significant effect on tissue areas.
 
 # Pairwise PERMANOVA for multiple comparisons
 ***
-## We found that Site was a significant factor in our PERMANOVA, so we are using a pairwise PERMANOVA using the function ```pairwise.adonis()``` from the package *pairwiseAdonis* to see where differences are between our sites.
+We found that Site was a significant factor in our PERMANOVA, so we are using a pairwise PERMANOVA using the function `pairwise.adonis()` from the package *pairwiseAdonis* to see where differences are between our sites.
 
 ```{r, pairwise permanova, include = TRUE }
 set.seed(999)
@@ -275,7 +275,7 @@ BC1 is significantly different from both T328 and FTL4.
 
 # Correlation Analyses
 ***
-## Multiple correlation analyses were carried out to see how different colony metrics affected disease manifestation and progress. 
+Multiple correlation analyses were carried out to see how different colony metrics affected disease manifestation and progress. 
 
 ```{r, correlation analyses, warning = FALSE, include = TRUE}
 
@@ -301,7 +301,7 @@ The number of disease lesions were positively correlated with the amount of dise
 
 # Analysis of Lesion Count using Kruskal-Wallis and Dunn's Test
 ***
-## Looking at differences of lesion count among site.
+Looking at differences of lesion count among site.
 ```{r, lesion count analyses, warning = FALSE, include = TRUE}
 kruskal.test(lesion.count ~ site, data = corr)
 
@@ -310,9 +310,9 @@ dunnTest(lesion.count ~ site, data = corr, method = 'bh')
 ```
 # Plotting
 ***
-## We are now going to make a number of box plots and correlation plots to visualize the data we just analyzed. I will display the code for one of each (as the code is the same just replacing variable names) and then I will compile the plots using the R package *patchwork*.
+We are now going to make a number of box plots and correlation plots to visualize the data we just analyzed. I will display the code for one of each (as the code is the same just replacing variable names) and then I will compile the plots using the R package *patchwork*.
 
-#Box Plots
+# Box Plots
 
 ```{r, boxplot.example, include = TRUE, results = "hide"}
 # This forces y axis labels to have 1 decimal place.
@@ -448,7 +448,7 @@ lesion.count.box
 <br><br>
 
 # Correlation Plots
-## Here I will be showing the code for a significant and a non-significant correlation plot as there will be slight difference in the code showing the correlation trend. 
+Here I will be showing the code for a significant and a non-significant correlation plot as there will be slight difference in the code showing the correlation trend. 
 
 ```{r, correlation.example, include = TRUE, results = "hide"}
 # No correlation
@@ -525,7 +525,7 @@ colony.size.disease.area
 
 # Putting plots together using *patchwork*.
 ***
-## *patchwork* adds ggplot2 plots together to compose multiplot layouts using simple operators.
+*patchwork* adds ggplot2 plots together to compose multiplot layouts using simple operators.
 
 ```{r, patch.lesion, include = TRUE}
 lesion.plots.patch <- total.colony.box + healthy.colony.box + disease.area.box + lesion.count.box + colony.size.disease.area + lesion.count.disease.area + lesion.count.colony.size + guide_area() + plot_layout(nrow = 4, guides = 'collect')+plot_annotation(tag_levels = 'a')
@@ -540,7 +540,7 @@ ggsave("../figures/lesion.plots.png",  plot= lesion.plots.patch, width=20, heigh
 
 # Rates of Loss
 ***
-## Rates of loss were calculated between timepoints, looking at correlations. Kruskal-Wallis Rank Sum Tests were used to determine if rates of loss varied by site, and correlation analyses were used to determine if colony metrics were related to rates of tissue loss. 
+Rates of loss were calculated between timepoints, looking at correlations. Kruskal-Wallis Rank Sum Tests were used to determine if rates of loss varied by site, and correlation analyses were used to determine if colony metrics were related to rates of tissue loss. 
 
 ```{r, loss.kw, include = TRUE }
 rate.l1.kw <- kruskal.test(loss ~ site, data = corr.t2)
@@ -555,7 +555,7 @@ rate.l3.kw
 
 # Correlation analyses
 ***
-## Correlation analyses were run on rates of loss and various colony metrics. 
+Correlation analyses were run on rates of loss and various colony metrics. 
 
 ```{r, loss.corr, include = TRUE}
 
@@ -572,7 +572,7 @@ cor.test(corr.t4$loss,corr.t4$total.colony.size, method="spearman", use="complet
 
 # Visualizing rates of loss
 ***
-## Now using same types plots as before, but for loss data. I am excluiding the first time point, and will subset accordingly. And use the same code as above. 
+Now using same types plots as before, but for loss data. I am excluiding the first time point, and will subset accordingly. And use the same code as above. 
 
 ```{r, loss.subset, include = TRUE, results = "hide"}
 #subset
@@ -730,6 +730,8 @@ loss.plots.patch
 ggsave("../figures/loss.plots.png", plot= loss.plots.patch, width=15, height=10, units="in", dpi=600)
 
 ```
+
+
 
 
 

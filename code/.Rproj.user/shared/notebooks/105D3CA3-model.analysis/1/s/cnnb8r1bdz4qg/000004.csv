@@ -1,0 +1,8 @@
+"0","# Significant Correlation"
+"0","lesion.count.disease.area.1 <-ggplot(corr, aes(x = disease.area, y = lesion.count, color = site))+"
+"0","  geom_point(size = 5)+"
+"0","  geom_smooth(method = ""lm"", fill = 'grey30', color = 'grey30')+"
+"0","  scale_color_manual(values = c(""#7BA46C"", ""#EACF9E"", ""#008D91""))+"
+"0","  labs(x = bquote('Disease Lesion Area'~(cm^2)), y = ""Lesion Count"") +"
+"0","  scale_y_continuous(labels = scale)"
+"0","lesion.count.disease.area.1"

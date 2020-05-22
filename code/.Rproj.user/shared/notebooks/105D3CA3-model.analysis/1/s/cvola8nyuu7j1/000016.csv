@@ -1,0 +1,3 @@
+"0","#------------Loss Plots--------------------------"
+"0","loss.plots.patch <-(rate.l1.box + l1.total.colony.size) / (l2.total.colony.size + l3.total.colony.size) + plot_layout(guides = 'collect')+plot_annotation(tag_levels = 'a')"
+"0","loss.plots.patch"

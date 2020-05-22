@@ -1,0 +1,26 @@
+permanovaTab = data.frame("Data set" = "Percent cover", "Level" = "Major taxa", "Test" = "PERMANOVA", "Comparison" = row.names(mjrAdonis$aov.tab[1,]), "pseudo.F" = mjrAdonis$aov.tab$F.Model[1], "p.value" = mjrAdonis$aov.tab$`Pr(>F)`[1]) %>% 
+  
+  add_row(data.frame("Data set" = "", "Level" = c(replicate(nrow(mjrPWAdonis),"")), "Test" = c("Pairwise", replicate(nrow(mjrPWAdonis)-1,"")), "Comparison" = mjrPWAdonis$pairs, "pseudo.F" = mjrPWAdonis$F.Model, "p.value" = mjrPWAdonis$p.adjusted)) %>%
+  
+  add_row(data.frame("Data set" = "", "Level" = "Minor taxa", "Test" = "PERMANOVA", "Comparison" = row.names(mnrAdonis$aov.tab[1,]), "pseudo.F" = mnrAdonis$aov.tab$F.Model[1], "p.value" = mnrAdonis$aov.tab$`Pr(>F)`[1])) %>% 
+  
+  add_row(data.frame("Data set" = "", "Level" = c(replicate(nrow(mnrPWAdonis),"")), "Test" = c("Pairwise", replicate(nrow(mnrPWAdonis)-1,"")), "Comparison" = mnrPWAdonis$pairs, "pseudo.F" = mnrPWAdonis$F.Model, "p.value" = mnrPWAdonis$p.adjusted)) %>%
+  add_row(data.frame("Data set" = "Coral Density", "Level" = "Minor taxa", "Test" = "PERMANOVA", "Comparison" = row.names(densAdonis$aov.tab[1,]), "pseudo.F" = densAdonis$aov.tab$F.Model[1], "p.value" = densAdonis$aov.tab$`Pr(>F)`[1])) %>% 
+  
+  add_row(data.frame("Data set" = "", "Level" = c(replicate(nrow(densPWAdonis),"")), "Test" = c("Pairwise", replicate(nrow(densPWAdonis)-1,"")), "Comparison" = densPWAdonis$pairs, "pseudo.F" = densPWAdonis$F.Model, "p.value" = densPWAdonis$p.adjusted)) %>%
+  mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
+  mutate_if(is.character, str_replace_all, pattern = "vs", replacement = "–") %>%
+  flextable() %>%
+  set_header_labels(Data.set = "Data set") %>% 
+  flextable::compose(part = "header", j = "pseudo.F", value = as_paragraph("Psuedo-", as_i("F"))) %>%
+  flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+  autofit() %>%
+  font(fontname = "Times New Roman", part = "all") %>%
+  fontsize(size = 12, part = "all") %>%
+  bold(part = "header") %>% 
+  colformat_num(j = "pseudo.F", digits = 2) %>%
+  colformat_num(j = "p.value", digits = 4, na_str = "ns")
+permanovaDoc = read_docx()
+permanovaDoc = body_add_flextable(permanovaDoc, value = permanovaTab)
+print(permanovaDoc, target = "../tables/permanovaTable.docx")
+permanovaTab

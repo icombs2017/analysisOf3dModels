@@ -1,0 +1,8 @@
+"0","#------------corr plot for l3 and t4--------------------------"
+"0","l3.total.colony.size.1 <-ggplot(corr.t4, aes(x = total.colony.size, y = loss, color = site))+"
+"0","  geom_point(size = 5)+"
+"0","  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+"
+"0","  scale_color_manual(values = c(""#7BA46C"", ""#EACF9E"", ""#008D91""))+"
+"0","  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T4'~(cm^2/wk))) +"
+"0","  scale_y_continuous(labels = scale)"
+"0","l2.total.colony.size.1"
