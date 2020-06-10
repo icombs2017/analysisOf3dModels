@@ -1,5 +1,0 @@
-"0","setwd(""../data"")"
-"0","if (!require(""pacman"")) install.packages(""pacman"")"
-"0","pacman::p_load(""ggplot2"", ""FSA"", ""officer"", ""gridExtra"", ""ggpubr"", ""Rmisc"", ""rcompanion"", ""RColorBrewer"", ""vegan"", ""nparcomp"", ""RVAideMemoire"", ""pairwiseAdonis"", ""PMCMR"", ""PMCMRplus"", ""patchwork"", ""magrittr"",""reshape2"", ""stringr"", ""dplyr"", ""flextable"")"
-"0","pacman::p_load_gh(""pmartinezarbizu/pairwiseAdonis/pairwiseAdonis"")"
-"0",""
