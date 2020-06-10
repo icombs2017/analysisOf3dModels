@@ -14,6 +14,8 @@ output:
 ---
 ```{r, setup, include = FALSE}
 knitr::opts_chunk$set(warning = FALSE, fig.align = 'left')
+knitr::opts_knit$set(root.dir = "../data")
+options(width = 88)
 library(magrittr)
 ```
 
@@ -28,20 +30,22 @@ library(magrittr)
 
 ###
 ***
-This is the analysis pipeline to analyze data generated from 3D models of fate tracked *Montastraea cavernosa* infected with stony coral tissue loss disease
+This is the analysis pipeline to analyze data generated from 3D models of fate tracked *Montastraea cavernosa* infected with stony coral tissue loss disease.
+
 ***
+
 ### All analyses performed with R version `r getRversion()`
 
 
 # Basic setup of R environment
 ***
 ## Loading required packages
-For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some must be downloaded from GitHub. We can use the following code to ld in the packages and install any packages not previously installed in the R console. 
+For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some must be downloaded from GitHub. We can use the following code to load in the packages and install any packages not previously installed in the R console. 
 
 ```{r,packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
-#setwd("link to github")
+setwd("../data")
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2, stringr, gridExtra, ggpubr, Rmisc, FSA, rcompanion, RColorBrewer, dplyr, vegan, nparcomp, RVAideMemoire, MANOVA.RM, pairwiseAdonis, PMCMR, PMCMRplus, patchwork)
+pacman::p_load("ggplot2", "FSA", "officer", "gridExtra", "ggpubr", "Rmisc", "rcompanion", "RColorBrewer", "vegan", "nparcomp", "RVAideMemoire", "pairwiseAdonis", "PMCMR", "PMCMRplus", "patchwork", "magrittr","reshape2", "stringr", "dplyr", "flextable")
 pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
 ```
@@ -51,8 +55,8 @@ pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 ***
 Loading the dataset into R, and subsetting as needed, we will be making multiple subsets, subsetting by time point and by site to make things easier to workwith. 
 
-```{r, load and subset, include = 'true', results = 'hide'}
-corr <- read.csv("../data/total.correlation.csv", head=T)
+```{r, load and subset, include = TRUE, results = "hide"}
+corr <- read.csv("../data/total.correlation.csv", header = T)
 str(corr)
 head(corr)
 
@@ -61,8 +65,11 @@ corr$total.colony.size <- corr$total.colony.size*10000
 corr$healthy.area <- corr$healthy.area*10000
 corr$disease.area <- corr$disease.area*10000
 
-# I am reordering the dates in my dataset to ensure that they display chronologically.
-corr$site=factor(corr$site, levels=unique(corr$site)) 
+# I am reordering the dates in my data set to ensure 
+# that they display chronologically.
+corr$site = factor(corr$site, levels=unique(corr$site)) 
+class(corr$date)
+corr$date = as.factor(corr$date)
 levels(corr$date)
 corr$date = factor(corr$date, levels(corr$date)[c(3, 4, 1, 2)])
 levels(corr$date)
@@ -86,7 +93,8 @@ droplevels(corr.loss$date)
 
 
 
-# Subsetting by Site (you can reset the factor for each site if needed from the code above)
+# Subsetting by Site 
+# (you can reset the factor for each site if needed from the code above)
 corr.bc1 <- subset(corr, site == 'BC1')
 corr.t328 <- subset(corr, site == 'T328')
 corr.ftl4 <- subset(corr, site == 'FTL4')
@@ -113,7 +121,7 @@ mean(corr.t1.ftl4$total.colony.size)
 ***
 A Shapiro-Wilk Normality Test will be run on our 3 main variables to assess normality
 
-```{r, normality, include = 'true'}
+```{r, normality, include = TRUE}
 shapiro.total <- shapiro.test(corr$total.colony.size)
 shapiro.total
 
@@ -129,10 +137,10 @@ shapiro.disease
 
 # Friedman Rank Sum Test
 ***
-Performs a Friedman rank sum test with unreplicated blocked data on the three major area measurments: total colony area, healthy tissue area, and lesion area. 
+Performs a Friedman rank sum test with unreplicated blocked data on the three major area measurements: total colony area, healthy tissue area, and lesion area. 
 
 
-```{r, Friedman, include = 'true'}
+```{r, Friedman, include = TRUE, results = "hide"}
 fried.total <- friedmanTest(y=corr$total.colony.size, groups = corr$date, blocks = corr$colony.id)
 fried.total 
 
@@ -152,10 +160,15 @@ fried.lesion
 ***
 Pairwise comparisons of significant Friedman's tests and manually adjusting the p values using a Bonferroni correction
 
-```{r, Nemenyi, include = 'true', results = 'hide'}
+```{r, Nemenyi, include = TRUE, results = "hide"}
 # Total colony size
 post.total <- posthoc.friedman.nemenyi.test(total.colony.size ~ date | colony.id, data = corr)
-summary(post.total)
+total.p.adjust <- p.adjust(post.total$p.value, method = "bonferroni")
+
+# Making a string of the test statistic and melting 
+# it into a column for making tables later
+post.total.statistic = c(4.269075, 7.589466,9.012491, 3.320392, 4.743416, 1.423025)
+post.total.statistic.melt = melt(post.total.statistic, id = 1)
 
 #taking pvalues from Nemenyi test and manually correcting them
 total.val <- c(0.0135,4.8e-07, 1.1e-09, 0.0875, 0.0044, 0.7458 )
@@ -163,27 +176,17 @@ total.val <- c(0.0135,4.8e-07, 1.1e-09, 0.0875, 0.0044, 0.7458 )
 # Using a bonferroni correction
 adjust.total.val <- p.adjust(total.val, method = 'bonferroni')
 
+# Now we are melting this vector (changing it from a row to a column) 
+# so we can incorporate into a table later on
+p.total.melt <- melt(adjust.total.val, id=1)
 
-# Pairwise comparisons using Nemenyi multiple comparison test	
-# with q approximation for unreplicated blocked data 
-# 
-# data:  total.colony.size and date and colony.id 
-# 
-# 
-# P value adjustment method: none 
-#          H0              statistic p.value   adjusted p
-# 1  8.24.18  =  9.11.18  4.269075  0.0135      0.018
-# 2  8.24.18  =  11.8.18  7.589466 4.8e-07      2.88e-06
-# 3 8.24.18  =  12.17.18  9.012491 1.1e-09      6.60e-09
-# 4  9.11.18  =  11.8.18  3.320392  0.0875      5.25e-01
-# 5 9.11.18  =  12.17.18  4.743416  0.0044      2.64e-02
-# 6 11.8.18  =  12.17.18  1.423025  0.7458      1.00e+00
 
 
 ############################################
 # Healthy tissue area
 post.healthy <- posthoc.friedman.nemenyi.test(healthy.area ~ date | colony.id, data = corr)
-summary(post.healthy)
+post.healthy.statistic = c(4.743416, 7.115125,8.380036, 2.371708, 3.636619, 1.264911)
+post.healthy.statistic.melt = melt(post.total.statistic, id = 1)
 
 #taking pvalues from Nemenyi test and manually correcting them
 
@@ -192,27 +195,17 @@ healthy.val <- c(0.0044, 2.9e-06,  1.9e-08, 0.3358,0.0497, 0.8078 )
 # Using a bonferroni correction
 adjust.healthy.val <- p.adjust(healthy.val, method = 'bonferroni')
 
-# Pairwise comparisons using Nemenyi multiple comparison test	
-# with q approximation for unreplicated blocked data 
-# 
-# data:  healthy.area and date and colony.id 
-# 
-# 
-# P value adjustment method: none 
-#     H0                  statistic p.value     padjust
-# 1  8.24.18  =  9.11.18  4.743416  0.0044      2.640e-02
-# 2  8.24.18  =  11.8.18  7.115125 2.9e-06      1.740e-05
-# 3 8.24.18  =  12.17.18  8.380036 1.9e-08      1.140e-07
-# 4  9.11.18  =  11.8.18  2.371708  0.3358      1.000e+00
-# 5 9.11.18  =  12.17.18  3.636619  0.0497      2.982e-01
-# 6 11.8.18  =  12.17.18  1.264911  0.8078      2.982e-01
+# Now we are melting this vector (changing it from a row to a column) 
+# so we can incorporate into a table later on
+p.healthy.melt <- melt(adjust.healthy.val, id=1)
+
 
 
 ############################################
 #Lesion area
 post.disease <- posthoc.friedman.nemenyi.test(disease.area ~ date | colony.id, data = corr)
-summary(post.disease)
-
+post.disease.statistic = c(1.8973666, 0.6324555,3.1622777, 1.264911, 5.059644, 3.794733)
+post.disease.statistic.melt = melt(post.total.statistic, id = 1)
 
 #taking pvalues from Nemenyi test and manually correcting them
 disease.val <- c(0.536, 0.970,  0.114, 0.808,0.002,0.037 )
@@ -222,29 +215,46 @@ disease.val <- c(0.536, 0.970,  0.114, 0.808,0.002,0.037 )
 # Using a bonferroni correction
 adjust.disease.val <- p.adjust(disease.val, method = 'bonferroni')
 
+# Now we are melting this vector (changing it from a row to a column) so we can incorporate into a table later on
+p.disease.melt <- melt(adjust.disease.val, id=1)
 
 
-
-
-# Pairwise comparisons using Nemenyi multiple comparison test	
-# with q approximation for unreplicated blocked data 
-# 
-# data:  disease.area and date and colony.id 
-# 
-# 
-# P value adjustment method: none 
-#         H0              statistic p.value   padjust
-# 1  8.24.18  =  9.11.18 1.8973666   0.536    1.000
-# 2  8.24.18  =  11.8.18 0.6324555   0.970    1.000
-# 3 8.24.18  =  12.17.18 3.1622777   0.114    0.684
-# 4  9.11.18  =  11.8.18 1.2649111   0.808    1.000
-# 5 9.11.18  =  12.17.18 5.0596443   0.002    0.012
-# 6 11.8.18  =  12.17.18 3.7947332   0.037    0.222
 ```
 <br><br>
+Now we are building a table and exporting it as a **.docx** file for use in publications, reporting, etc.
+```{r, friedTable, include = TRUE, ft.align = "left"}
+friedTab = data.frame("Test" = "Total Colony Size", "Comparison" = " ", "Statistic" = fried.total[["statistic"]][["Friedman chi-squared"]], "p.value" = fried.total$p.value[1]) %>% 
+  add_row("Test" = " ", "Comparison" = c("T1 - T2", "T1 - T3", "T1 - T4", "T2 - T3", "T2 - T4", "T3 - T4"), "Statistic" = post.total.statistic.melt$value, "p.value" = p.total.melt$value) %>% 
+  add_row("Test" = "Healthy Tissue Area", "Comparison" = " ", "Statistic" =  fried.healthy[["statistic"]][["Friedman chi-squared"]], "p.value" = fried.healthy$p.value[1]) %>% 
+  add_row("Test" = " ", "Comparison" = c("T1 - T2", "T1 - T3", "T1 - T4", "T2 - T3", "T2 - T4", "T3 - T4"), "Statistic" = post.healthy.statistic.melt$value, "p.value" = p.healthy.melt$value) %>% 
+  add_row("Comparison" = " ", "Test" = "Disease Lesion Area", "Statistic" =  fried.disease[["statistic"]][["Friedman chi-squared"]], "p.value" = fried.disease$p.value[1]) %>% 
+  add_row("Test" = " ", "Comparison" = c("T1 - T2", "T1 - T3", "T1 - T4", "T2 - T3", "T2 - T4", "T3 - T4"), "Statistic" = post.disease.statistic.melt$value, "p.value" = p.disease.melt$value) %>% 
+
+mutate_if(is.numeric, round, digits = 3) %>%     
+mutate(p.value = replace(p.value, p.value >= 0.05, "ns")) %>%
+mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
+mutate_if(is.character, str_replace_all, pattern = "-", replacement = "–") %>%
+flextable() %>%
+set_header_labels(Data.set = "Data set") %>% 
+flextable::compose(part = "header", j = "Statistic", value = as_paragraph("Test Statistic")) %>%
+flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+autofit() %>%
+font(fontname = "Times New Roman", part = "all") %>%
+fontsize(size = 12, part = "all") %>%
+bold(part = "header") %>% 
+colformat_num(j = "Statistic", digits = 2) %>%
+colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
+align_nottext_col(align = "center", header = TRUE, footer = TRUE) %>% 
+align(align = "center", j = "p.value")
+
+friedDoc = read_docx()
+friedDoc = body_add_flextable(friedDoc, value = friedTab)
+print(friedDoc, target = "../tables/friedTable.docx")
+friedTab
+```
 
 
-#Running PERMANOVA in R
+# Running PERMANOVA in R
 ***
 We will be using the ```adonis()``` function in *vegan*. We will run a total of 999 permutations and test the effects of site, time, and the interaction between the two factors.
 
@@ -254,6 +264,7 @@ set.seed(999)
 perm <- adonis(formula = corr[c(5:7)] ~ site * date, data = corr, method = "euclidian", perm = 999)
 perm 
 ```
+
 
 PERMANOVA reveals that Site has a significant effect on tissue areas. 
 
@@ -272,6 +283,33 @@ perm.pair
 BC1 is significantly different from both T328 and FTL4. 
 
 <br><br>
+Now we are making a table for both our PERMANOVA results and our pairiwse tests.
+
+```{r, permTab, include = TRUE, ft.align = "left"}
+permTab = data.frame("Data" = "Surface Area", "Test" = "PERMANOVA", "Comparison" = "Site", "pseudo.F" = perm$aov.tab$F.Model[1], "p.value" = perm$aov.tab$`Pr(>F)`[1]) %>% 
+  add_row("Data" = " ", "Test" = c("Pairwise", replicate(nrow(perm.pair)-1,"")), "Comparison" = perm.pair$pairs, "pseudo.F" = perm.pair$F.Model, "p.value" = perm.pair$p.adjusted) %>% 
+  add_row("Data" = " ", "Test" = "PERMANOVA", "Comparison" = "Date", "pseudo.F" = perm$aov.tab$F.Model[2], "p.value" = perm$aov.tab$`Pr(>F)`[2]) %>% 
+  add_row("Data" = " ", "Test" = "PERMANOVA", "Comparison" = "Site:Date", "pseudo.F" = perm$aov.tab$F.Model[3], "p.value" = perm$aov.tab$`Pr(>F)`[3]) %>% 
+  
+mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
+mutate_if(is.character, str_replace_all, pattern = "vs", replacement = "–") %>%
+flextable() %>%
+set_header_labels(Data.set = "Data set") %>% 
+flextable::compose(part = "header", j = "pseudo.F", value = as_paragraph("Psuedo-", as_i("F"))) %>%
+flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+autofit() %>%
+font(fontname = "Times New Roman", part = "all") %>%
+fontsize(size = 12, part = "all") %>%
+bold(part = "header") %>% 
+colformat_num(j = "pseudo.F", digits = 2) %>%
+colformat_num(j = "p.value", digits = 4, na_str = "ns")
+
+permanovaDoc = read_docx()
+permanovaDoc = body_add_flextable(permanovaDoc, value = permTab)
+print(permanovaDoc, target = "../tables/permanovaTable.docx")
+permTab
+```
+<br><br>
 
 # Correlation Analyses
 ***
@@ -282,32 +320,91 @@ Multiple correlation analyses were carried out to see how different colony metri
 # Looking at correlation between total colony size and disease lesion area
 
 colonysize.vs.lesionarea <- cor.test(corr$total.colony.size,corr$disease.area, method="spearman", use="complete.obs")
-colonysize.vs.lesionarea
+
 
 # Looking at correlation between total colony size and the number of disease lesions on a colony
 
 colonysize.vs.lesioncount<- cor.test(corr$total.colony.size,corr$lesion.count, method="spearman", use="complete.obs")
-colonysize.vs.lesioncount
 
 # Looking at correlation between the amount of lesion tissue area and number of disease lesions
 
 lesionarea.vs.lesioncount <- cor.test(corr$disease.area,corr$lesion.count, method="spearman", use="complete.obs")
-lesionarea.vs.lesioncount
 
 
 ```
+```{r, correlationResults, echo = FALSE}
+
+spearSizeTab = data.frame("Data" = "Rate of Tissue Loss", "Test" = "Spearman's Rank Correlation", "Comparison" = "Colony Size vs Lesion Area ", "rho" = colonysize.vs.lesionarea[["estimate"]][["rho"]], "p.value" = colonysize.vs.lesionarea$p.value) %>% 
+  add_row("Data" = " ", "Test" = " ", "Comparison" = "Colony Size vs Lesion Count", "rho" = colonysize.vs.lesioncount[["estimate"]][["rho"]], "p.value" = colonysize.vs.lesioncount$p.value) %>% 
+  add_row("Data" = " ", "Test" = " ", "Comparison" = "Lesion Area vs Lesion Count", "rho" = lesionarea.vs.lesioncount[["estimate"]][["rho"]], "p.value" = lesionarea.vs.lesioncount$p.value) %>% 
+  
+mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
+mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
+mutate_if(is.character, str_replace_all, pattern = "vs", replacement = "–") %>% 
+flextable() %>%
+set_header_labels(Data.set = "Data") %>% 
+flextable::compose(part = "header", j = "rho", value = as_paragraph("𝜌")) %>%
+flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+autofit() %>%
+font(fontname = "Times New Roman", part = "all") %>%
+fontsize(size = 12, part = "all") %>%
+bold(part = "header") %>% 
+colformat_num(j = "rho", digits = 3) %>%
+colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
+align(align = "center", j = "p.value") %>% 
+align(align = "center", j = "rho")
+
+
+spearSizeDoc = read_docx()
+spearSizeDoc = body_add_flextable(spearSizeDoc, value = spearSizeTab)
+print(spearSizeDoc, target = "../tables/spearSizeTab.docx")
+
+```
+<br><br>
+
 The number of disease lesions were positively correlated with the amount of disease lesion tissue area. However, colony size was not correlated with disease lesion area or the number of disease lesions. So, bigger colonies have no more (or less) disease than smaller colonies. 
 <br><br>
 
 # Analysis of Lesion Count using Kruskal-Wallis and Dunn's Test
 ***
 Looking at differences of lesion count among site.
-```{r, lesion count analyses, warning = FALSE, include = TRUE}
-kruskal.test(lesion.count ~ site, data = corr)
+```{r, lesionCountAnalyses, include = TRUE}
+lesion.kw <- kruskal.test(lesion.count ~ site, data = corr)
 
-dunnTest(lesion.count ~ site, data = corr, method = 'bh')
+lesion.kw.dunn <- dunnTest(lesion.count ~ site, data = corr, method = 'bh')
 
 ```
+```{r, lesionCountAnalysesOutputs, include = TRUE, echo = FALSE}
+lesionKwTab = data.frame("Data" = "Lesion Count", "Test" = "Kruskal-Wallis", "Comparison" = "Site ", "TestStatistic" = lesion.kw[["statistic"]][["Kruskal-Wallis chi-squared"]], "p.value" = lesion.kw[["p.value"]]) %>% 
+  add_row(data.frame("Data" = " ", "Test" = c("Pairwise", " ", " "), "Comparison" = lesion.kw.dunn[["res"]][["Comparison"]], "TestStatistic" = lesion.kw.dunn[["res"]][["Z"]], "p.value" = lesion.kw.dunn[["res"]][["P.adj"]])) %>% 
+
+mutate_if(is.numeric, round, digits = 3) %>%     
+mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
+mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
+flextable() %>%
+set_header_labels(Data.set = "Data") %>% 
+flextable::compose(part = "header", j = "TestStatistic", value = as_paragraph("Test Statistic")) %>%
+flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+autofit() %>%
+font(fontname = "Times New Roman", part = "all") %>%
+fontsize(size = 12, part = "all") %>%
+bold(part = "header") %>% 
+colformat_num(j = "TestStatistic", digits = 3) %>%
+colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
+align(align = "center", j = "p.value") %>% 
+align(align = "center", j = "TestStatistic")
+
+
+lesionKwDoc = read_docx()
+lesionKwDoc = body_add_flextable(spearSizeDoc, value = lesionKwTab)
+print(lesionKwDoc, target = "../tables/lesionKwTab.docx")
+
+lesionKwTab
+
+
+
+```
+
 # Plotting
 ***
 We are now going to make a number of box plots and correlation plots to visualize the data we just analyzed. I will display the code for one of each (as the code is the same just replacing variable names) and then I will compile the plots using the R package *patchwork*.
@@ -557,18 +654,43 @@ rate.l3.kw
 ***
 Correlation analyses were run on rates of loss and various colony metrics. 
 
-```{r, loss.corr, include = TRUE}
+```{r, loss.corr, include = TRUE, warning = FALSE}
 
 ## Rate of loss 1 and total colony size at T2
-cor.test(corr.t2$loss,corr.t2$total.colony.size, method="spearman", use="complete.obs")
+spear.t2 <- cor.test(corr.t2$loss,corr.t2$total.colony.size, method="spearman", use="complete.obs")
 
 # Rate of loss 2 and total colony size at T3
-cor.test(corr.t3$loss,corr.t3$total.colony.size, method="spearman", use="complete.obs")
+spear.t3 <- cor.test(corr.t3$loss,corr.t3$total.colony.size, method="spearman", use="complete.obs")
 
 # Rate of loss 3 and total colony size at T4
-cor.test(corr.t4$loss,corr.t4$total.colony.size, method="spearman", use="complete.obs")
+spear.t4 <- cor.test(corr.t4$loss,corr.t4$total.colony.size, method="spearman", use="complete.obs")
 
 ```
+
+```{r, correlationTab, include = TRUE}
+spearLossTab = data.frame("Data" = "Rate of Tissue Loss", "Test" = "Spearman's Rank Correlation", "Comparison" = "T1-T2 ", "rho" = spear.t2[["estimate"]][["rho"]], "p.value" = spear.t2$p.value) %>% 
+  add_row("Data" = " ", "Test" = " ", "Comparison" = "T2-T3", "rho" = spear.t3[["estimate"]][["rho"]], "p.value" = spear.t3$p.value) %>% 
+  add_row("Data" = " ", "Test" = " ", "Comparison" = "T3-T4", "rho" = spear.t4[["estimate"]][["rho"]], "p.value" = spear.t4$p.value) %>% 
+  
+mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
+flextable() %>%
+set_header_labels(Data.set = "Data") %>% 
+flextable::compose(part = "header", j = "rho", value = as_paragraph("𝜌")) %>%
+flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+autofit() %>%
+font(fontname = "Times New Roman", part = "all") %>%
+fontsize(size = 12, part = "all") %>%
+bold(part = "header") %>% 
+colformat_num(j = "rho", digits = 3) %>%
+colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
+align(align = "center", j = "p.value")
+
+spearLossDoc = read_docx()
+spearLossDoc = body_add_flextable(spearLossDoc, value = spearLossTab)
+print(spearLossDoc, target = "../tables/spearLossTab.docx")
+```
+
+
 
 # Visualizing rates of loss
 ***
@@ -730,8 +852,6 @@ loss.plots.patch
 ggsave("../figures/loss.plots.png", plot= loss.plots.patch, width=15, height=10, units="in", dpi=600)
 
 ```
-
-
 
 
 

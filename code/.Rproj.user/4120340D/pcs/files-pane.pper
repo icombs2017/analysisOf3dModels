@@ -1,9 +1,9 @@
 {
-    "path" : "~/Documents/GitHub/Analysis of Fate Tracked Montastraea cavernosa Colonies/Code",
-    "sortOrder" : [
+    "path": "~/Documents/GitHub/analysisOf3dModels/code",
+    "sortOrder": [
         {
-            "ascending" : true,
-            "columnIndex" : 2
+            "ascending": true,
+            "columnIndex": 2
         }
     ]
 }
