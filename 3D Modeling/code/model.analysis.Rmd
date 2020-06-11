@@ -624,11 +624,12 @@ colony.size.disease.area
 ***
 *patchwork* adds ggplot2 plots together to compose multiplot layouts using simple operators.
 
+
 ```{r, patch.lesion, include = TRUE}
 lesion.plots.patch <- total.colony.box + healthy.colony.box + disease.area.box + lesion.count.box + colony.size.disease.area + lesion.count.disease.area + lesion.count.colony.size + guide_area() + plot_layout(nrow = 4, guides = 'collect')+plot_annotation(tag_levels = 'a')
 
-## Save
-ggsave("../figures/lesion.plots.png",  plot= lesion.plots.patch, width=20, height=20, units="in", dpi=600)
+ggsave("../figures/lesion.plots.png", plot = lesion.plots.patch, width = 20, height = 20, units = "in", dpi = 600)
+
 
 ```
 
@@ -694,7 +695,7 @@ print(spearLossDoc, target = "../tables/spearLossTab.docx")
 
 # Visualizing rates of loss
 ***
-Now using same types plots as before, but for loss data. I am excluiding the first time point, and will subset accordingly. And use the same code as above. 
+Now using same types plots as before, but for loss data. I am excluding the first time point, and will subset accordingly. And use the same code as above. 
 
 ```{r, loss.subset, include = TRUE, results = "hide"}
 #subset
@@ -702,7 +703,7 @@ corr.loss <- subset(corr, date != "8.24.18")
 
 ```
 
-```{r, loss.plots, echo = FALSE}
+```{r, loss.plots, echo = FALSE, results = "hide"}
 
 #------------box plot for L1---------------------------
 scale <- function(x) sprintf("%.0f", x)
@@ -744,7 +745,6 @@ rate.l1.box
 # makes a scatterplot of correlation
 l1.total.colony.size.1 <-ggplot(corr.t2, aes(x = total.colony.size, y = loss, color = site))+
   geom_point(size = 5)+
-  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
   labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T2'~(cm^2/wk))) +
   scale_y_continuous(labels = scale)
@@ -772,7 +772,6 @@ l1.total.colony.size
 # makes a scatterplot of correlation
 l2.total.colony.size.1 <-ggplot(corr.t3, aes(x = total.colony.size, y = loss, color = site))+
   geom_point(size = 5)+
-  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
   labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T3'~(cm^2/wk))) +
   scale_y_continuous(labels = scale)
@@ -824,7 +823,6 @@ rate.l3.box
 #------------corr plot for l3 and t4--------------------------
 l3.total.colony.size.1 <-ggplot(corr.t4, aes(x = total.colony.size, y = loss, color = site))+
   geom_point(size = 5)+
-  #geom_smooth(method = 'lm', color = 'grey30', fill = 'grey30')+
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
   labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T4'~(cm^2/wk))) +
   scale_y_continuous(labels = scale)
@@ -841,7 +839,6 @@ l3.total.colony.size <- l3.total.colony.size.1 +
         axis.text.y=element_text(size=12, color="black"),
         axis.title.y = element_text(size = 16, color = 'black'),
         plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))
-  # rremove("legend")
 l3.total.colony.size
 
 #------------Loss Plots--------------------------
@@ -852,7 +849,7 @@ loss.plots.patch
 ggsave("../figures/loss.plots.png", plot= loss.plots.patch, width=15, height=10, units="in", dpi=600)
 
 ```
-
+![Patchwork Plots](../figures/loss.plots.png){width=100%}
 
 
 
