@@ -1,0 +1,562 @@
+####packages####
+
+library(ggplot2)
+library(vegan)
+library(gridExtra)
+library(ggpubr)
+library(FSA)
+library(rcompanion)
+library(vegan)
+
+#-----------------------------
+####data import/normality tests####
+
+prism <- read.csv("prism_area_measurements.csv", head=T)
+head(prism)
+str(prism)
+
+# checking normality assumptions
+shapiro.test(prism$whole)
+# Shapiro-Wilk normality test
+# 
+# data:  prism$whole
+# W = 0.9114, p-value = 0.07856
+shapiro.test(prism$square)
+# Shapiro-Wilk normality test
+# 
+# data:  prism$square
+# W = 0.91362, p-value = 4.538e-12
+shapiro.test(prism$rectangle)
+# Shapiro-Wilk normality test
+# 
+# data:  prism$rectangle
+# W = 0.84311, p-value < 2.2e-16
+shapiro.test(prism$circle)
+# Shapiro-Wilk normality test
+# 
+# data:  prism$circle
+# W = 0.90575, p-value = 3.736e-05
+
+# mostly not normal, doing sqrt transformation
+prism$square.sqrt <- sqrt(prism$square)
+prism$rectangle.sqrt <- sqrt(prism$rectangle)
+prism$circle.sqrt <- sqrt(prism$circle)
+head(prism)
+
+shapiro.test(prism$square.sqrt)
+# Shapiro-Wilk normality test
+# 
+# data:  prism$square.sqrt
+# W = 0.92871, p-value = 9.45e-11
+shapiro.test(prism$rectangle.sqrt)
+# Shapiro-Wilk normality test
+# 
+# data:  prism$rectangle.sqrt
+# W = 0.87949, p-value = 2.006e-14
+shapiro.test(prism$circle.sqrt)
+# Shapiro-Wilk normality test
+# 
+# data:  prism$circle.sqrt
+# W = 0.91458, p-value = 8.984e-05
+
+#------------------------------------
+####ANOVA####
+
+# ANOVA of whole model areas
+
+# testing for difference between model areas by location
+anova.whole <- aov(prism$whole~prism$location)
+summary(anova.whole)
+# Df Sum Sq Mean Sq F value   Pr(>F)    
+# prism$location  2  65.66   32.83   18.21 7.54e-05 ***
+#   Residuals      16  28.85    1.80                     
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 381 observations deleted due to missingness
+
+# calculates mean and SD by location
+aggregate(whole ~ location, prism, mean)
+# location    whole
+# 1  pompano 8.934636
+# 2     pool 4.758737
+# 3  stlucie 5.500271
+aggregate(whole ~ location, prism, sd)
+# location     whole
+# 1  pompano 0.4864757
+# 2     pool 0.3275647
+# 3  stlucie 0.7232626
+
+# yes, there is a sig difference between model areas, with reef sites having larger models, but larger standard deviation
+
+#------------------------------------
+####PERMANOVA####
+
+# PERMANOVA with nested factors
+# transfer from Primer to R in progress
+
+# Setting seed allows randomized processes to be repeated later
+set.seed(927)
+
+dist <- vegdist(prism[c(8:10)], method="euclidean", na.rm=TRUE)
+
+#------------------------------------
+####Kruskal-Wallis####
+
+# Kruskal-Wallis tests for each shape
+square.kw <- compare_means(square.sqrt ~ location, data=prism, method = "kruskal.test")
+square.kw
+# A tibble: 1 x 6
+# .y.        p p.adj p.format p.signif method        
+# <chr>  <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 square 0.102   0.1 0.1      ns       Kruskal-Wallis
+
+rectangle.kw <- compare_means(rectangle.sqrt ~ location, data=prism, method = "kruskal.test")
+rectangle.kw
+# # A tibble: 1 x 6
+# .y.               p    p.adj p.format p.signif method        
+# <chr>         <dbl>    <dbl> <chr>    <chr>    <chr>         
+#   1 rectangle 0.0000442 0.000044 4.4e-05  ****     Kruskal-Wallis
+
+circle.kw <- compare_means(circle.sqrt ~ location, data=prism, method = "kruskal.test")
+circle.kw
+# # A tibble: 1 x 6
+# .y.        p p.adj p.format p.signif method        
+# <chr>  <dbl> <dbl> <chr>    <chr>    <chr>         
+#   1 circle 0.107  0.11 0.11     ns       Kruskal-Wallis
+
+kruskal <- rbind(square.kw,rectangle.kw,circle.kw)
+write.csv(kruskal, file="Kruskal_outputs.csv")
+
+# pairwise Dunn tests by bank
+square.dunn <- dunnTest(square.sqrt ~ location, data=prism, method = "bh")$res
+rectangle.dunn <- dunnTest(rectangle.sqrt ~ location, data=prism, method = "bh")$res
+circle.dunn <- dunnTest(circle.sqrt ~ location, data=prism, method = "bh")$res
+
+dunn <- rbind(square.dunn,rectangle.dunn,circle.dunn)
+write.csv(dunn, file="Dunn_outputs.csv")
+
+# removing template comparisons in rectangle.dunn for plotting
+# not needed for square or circle since no sig diff
+rectangle.dunn <- rectangle.dunn[-c(4:6),]
+rectangle.dunn
+
+# compact letter display for figures
+square.list <- cldList(P.adj ~ Comparison, data = square.dunn, threshold = 0.05)
+rectangle.list <- cldList(P.adj ~ Comparison, data = rectangle.dunn, threshold = 0.05)
+circle.list <- cldList(P.adj ~ Comparison, data = circle.dunn, threshold = 0.05)
+
+#-----------------------------------
+####plots####
+
+# subsetting dataset to remove template
+# will instead use line at template value in plots
+prism.sub <- prism[ which(prism$location!='template'), ]
+head(prism.sub)
+
+prism.sub$location=factor(prism.sub$location, levels=unique(prism.sub$location)) 
+
+# boxplots comparing shape areas to template
+square.box <-
+  ggboxplot(
+    prism.sub,
+    x = "location",
+    y = "square",
+    color = "grey30",
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    fill = "location",
+    add = "jitter",
+    add.params = list(size = 1, jitter = 0.5),
+    width = 0.7,
+    size = 0.5
+  ) + labs(x = "Location",
+           y = "Area (cm2)",
+           title = "Square",
+           fill = 'Location') + 
+  theme_bw() + 
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank()) + 
+  stat_compare_means(aes(label = paste0("p=", ..p.format..)), label.x=2,hjust=0.5, vjust=4) + 
+  geom_hline(yintercept = 40.3225, color = "black", size=1) 
+# geom_text(data=square.list, aes(x = Group, y=0, vjust=-2.5, label=Letter))
+square.box
+
+rectangle.box <-
+  ggboxplot(
+    prism.sub,
+    x = "location",
+    y = "rectangle",
+    color = "grey30",
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    fill = "location",
+    add = "jitter",
+    add.params = list(size = 1, jitter = 0.5),
+    width = 0.7,
+    size = 0.5
+  ) + labs(x = "Location",
+           y = element_blank(),
+           title = "Rectangle",
+           fill = 'Location') + 
+  theme_bw() + 
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank()) + 
+  stat_compare_means(aes(label = paste0("p=", ..p.format..)), label.x=2,hjust=0.5, vjust=4) + 
+  geom_hline(yintercept = 12.9032, color = "black", size=1) +
+  geom_text(data=rectangle.list, aes(x = Group, y=23, label=Letter)) +
+  ylim(8,26)
+rectangle.box
+
+circle.box <-
+  ggboxplot(
+    prism.sub,
+    x = "location",
+    y = "circle",
+    color = "grey30",
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    fill = "location",
+    add = "jitter",
+    add.params = list(size = 1, jitter = 0.5),
+    width = 0.7,
+    size = 0.5
+  ) + labs(x = "Location",
+           y = element_blank(),
+           title = "Circle",
+           fill = 'Location') + 
+  theme_bw() + 
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank()) + 
+  stat_compare_means(aes(label = paste0("p=", ..p.format..)), label.x=2,hjust=0.5, vjust=4) + 
+  geom_hline(yintercept = 45.60367312, color = "black", size=1) 
+# geom_text(data=circle.list, aes(x = Group, y=0, vjust=-2.5, label=Letter))
+circle.box
+
+plot=grid.arrange(square.box, rectangle.box, circle.box, ncol=3, nrow=1, widths=c(3.1,3,3), heights=c(3))
+
+#saves plot as PDF
+ggsave("prism_area_means.pdf", plot= plot, width=12, height=4, units="in", dpi=300)
+# following export, need to change the p values in these plots to reflect the original stats
+# the exported stats are based on the subset dataframe, not including template
+# the earlier stats include the template in comparisons
+
+#-------------------------------
+####shape error normality####
+
+# repeating the same stats and plots with the error measurements
+corr <- read.csv("area_corr.csv", head=T)
+str(corr)
+head(corr)
+
+shapiro.test(corr$square.diff)
+# Shapiro-Wilk normality test
+# 
+# data:  corr$square.diff
+# W = 0.76877, p-value < 2.2e-16
+
+shapiro.test(corr$rectangle.diff)
+# Shapiro-Wilk normality test
+# 
+# data:  corr$rectangle.diff
+# W = 0.66618, p-value < 2.2e-16
+
+shapiro.test(corr$circle.diff)
+# Shapiro-Wilk normality test
+# 
+# data:  corr$circle.diff
+# W = 0.77602, p-value = 2.904e-09
+
+# very non-normal, appyling sqrt transformation
+
+corr$square.diff.sqrt <- sqrt(corr$square.diff)
+corr$rectangle.diff.sqrt <- sqrt(corr$rectangle.diff)
+corr$circle.diff.sqrt <- sqrt(corr$circle.diff)
+head(corr)
+
+shapiro.test(corr$square.diff.sqrt)
+# Shapiro-Wilk normality test
+# 
+# data:  corr$square.diff.sqrt
+# W = 0.95065, p-value = 1.908e-08
+
+shapiro.test(corr$rectangle.diff.sqrt)
+# Shapiro-Wilk normality test
+# 
+# data:  corr$rectangle.diff.sqrt
+# W = 0.9146, p-value = 7.662e-12
+
+shapiro.test(corr$circle.diff.sqrt)
+# Shapiro-Wilk normality test
+# 
+# data:  corr$circle.diff.sqrt
+# W = 0.92993, p-value = 0.000506
+
+# still not normal
+
+#------------------------------------
+####shape error PERMANOVA####
+
+# PERMANOVA with nested factors
+# transfer from Primer to R in progress
+
+# Setting seed allows randomized processes to be repeated later
+set.seed(927)
+
+dist <- vegdist(prism[c(8:10)], method="euclidean", na.rm=TRUE)
+
+#------------------------------------
+####shape error Kruskal-Wallis####
+
+# Kruskal-Wallis tests for each shape
+square.diff.kw <- compare_means(square.diff.sqrt ~ location, data=corr, method = "kruskal.test")
+square.diff.kw
+# # A tibble: 1 x 6
+# .y.                        p      p.adj p.format p.signif method        
+# <chr>                  <dbl>      <dbl> <chr>    <chr>    <chr>         
+#   1 square.diff.sqrt 0.000000311 0.00000031 3.1e-07  ****     Kruskal-Wallis
+
+rectangle.diff.kw <- compare_means(rectangle.diff.sqrt ~ location, data=corr, method = "kruskal.test")
+rectangle.diff.kw
+# # A tibble: 1 x 6
+# .y.                          p     p.adj p.format p.signif method        
+# <chr>                    <dbl>     <dbl> <chr>    <chr>    <chr>         
+#   1 rectangle.diff.sqrt 0.00000453 0.0000045 4.5e-06  ****     Kruskal-Wallis
+
+circle.diff.kw <- compare_means(circle.diff.sqrt ~ location, data=corr, method = "kruskal.test")
+circle.diff.kw
+# # A tibble: 1 x 6
+# .y.                    p  p.adj p.format p.signif method        
+# <chr>              <dbl>  <dbl> <chr>    <chr>    <chr>         
+#   1 circle.diff.sqrt 0.00631 0.0063 0.0063   **       Kruskal-Wallis
+
+kruskal <- rbind(square.diff.kw,rectangle.diff.kw,circle.diff.kw)
+write.csv(kruskal, file="Kruskal_error_outputs.csv")
+
+# pairwise Dunn tests by location
+square.diff.dunn <- dunnTest(square.diff.sqrt ~ location, data=corr, method = "bh")$res
+rectangle.diff.dunn <- dunnTest(rectangle.diff.sqrt ~ location, data=corr, method = "bh")$res
+circle.diff.dunn <- dunnTest(circle.diff.sqrt ~ location, data=corr, method = "bh")$res
+
+dunn <- rbind(square.diff.dunn,rectangle.diff.dunn,circle.diff.dunn)
+write.csv(dunn, file="Dunn_error_outputs.csv")
+
+# compact letter display for figures
+square.diff.list <- cldList(P.adj ~ Comparison, data = square.diff.dunn, threshold = 0.05)
+rectangle.diff.list <- cldList(P.adj ~ Comparison, data = rectangle.diff.dunn, threshold = 0.05)
+circle.diff.list <- cldList(P.adj ~ Comparison, data = circle.diff.dunn, threshold = 0.05)
+
+#-----------------------------------
+####shape error plots####
+
+corr$location=factor(corr$location, levels=unique(corr$location)) 
+
+# creates a function that forces y axis labels to have 1 decimal place
+scale <- function(x) sprintf("%.0f", x)
+
+# boxplots comparing shape areas to template
+square.diff.box <-
+  ggboxplot(
+    corr,
+    x = "location",
+    y = "square.diff",
+    color = "grey30",
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    fill = "location",
+    add = "jitter",
+    add.params = list(size = 1, jitter = 0.5),
+    width = 0.7,
+    size = 0.5
+  ) + labs(x = "Location",
+           y = "Shape Error (cm2)",
+           #title = "Square",
+           fill = 'Location') + 
+  theme_bw() + 
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") + 
+  stat_compare_means(aes(label = paste0("p=", ..p.format..)), label.x=2,hjust=0.5, vjust=4) +
+ geom_text(data=square.diff.list, aes(x = Group, y=0, vjust=-22.5, label=Letter)) +
+ scale_y_continuous(labels = scale)
+square.diff.box
+
+rectangle.diff.box <-
+  ggboxplot(
+    corr,
+    x = "location",
+    y = "rectangle.diff",
+    color = "grey30",
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    fill = "location",
+    add = "jitter",
+    add.params = list(size = 1, jitter = 0.5),
+    width = 0.7,
+    size = 0.5
+  ) + labs(x = "Location",
+           y = element_blank(),
+           #title = "Rectangle",
+           fill = 'Location') + 
+  theme_bw() + 
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") + 
+  stat_compare_means(aes(label = paste0("p=", ..p.format..)), label.x=2,hjust=0.5, vjust=4) +
+  geom_text(data=rectangle.diff.list, aes(x = Group, y=0, vjust=-22.5, label=Letter))  +
+  scale_y_continuous(labels = scale)
+rectangle.diff.box
+
+circle.diff.box <-
+  ggboxplot(
+    corr,
+    x = "location",
+    y = "circle.diff",
+    color = "grey30",
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    fill = "location",
+    add = "jitter",
+    add.params = list(size = 1, jitter = 0.5),
+    width = 0.7,
+    size = 0.5
+  ) + labs(x = "Location",
+           y = element_blank(),
+           #title = "Circle",
+           fill = 'Location') + 
+  theme_bw() + 
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") + 
+  stat_compare_means(aes(label = paste0("p=", ..p.format..)), label.x=2,hjust=0.5, vjust=4) + 
+  geom_text(data=circle.diff.list, aes(x = Group, y=0, vjust=-22.5, label=Letter)) +
+  scale_y_continuous(labels = scale)
+circle.diff.box
+
+plot2=grid.arrange(square.diff.box, rectangle.diff.box, circle.diff.box, ncol=3, nrow=1, widths=c(3.1,3,3), heights=c(3))
+
+#saves plot as PDF
+ggsave("prism_error_means.pdf", plot= plot2, width=12, height=4, units="in", dpi=300)
+
+#-------------------------------
+####shape error correlations####
+
+# testing correlation between size of model (total area) and error associated with shape measurements
+# i.e. if the model area is larger (higher filming altitude), are models worse quality?
+
+# tests correlation between model area and the difference between in-model shape measurements and the template measurements (error)
+cor.test(corr$whole,corr$square.diff, method="spearman", use="complete.obs")
+# Spearman's rank correlation rho
+# 
+# data:  corr$whole and corr$square.diff
+# S = 3958750, p-value = 0.1084
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+#        rho 
+# 0.09333898 
+
+cor.test(corr$whole,corr$rectangle.diff, method="spearman", use="complete.obs")
+# Spearman's rank correlation rho
+# 
+# data:  corr$whole and corr$rectangle.diff
+# S = 3100600, p-value = 1.231e-05
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+#       rho 
+# 0.2527713 
+
+cor.test(corr$whole,corr$circle.diff, method="spearman", use="complete.obs")
+# Spearman's rank correlation rho
+# 
+# data:  corr$whole and corr$circle.diff
+# S = 48656, p-value = 0.01591
+# alternative hypothesis: true rho is not equal to 0
+# sample estimates:
+#       rho 
+# 0.2794314 
+
+# significant correlation for rectangle and circle, so let's see if this is driven by particular sites
+
+#-----------------------------------
+####shape error correlation plots####
+
+# correlation plots comparing shape error to overall model area
+
+corr$location=factor(corr$location, levels=unique(corr$location)) 
+
+# makes a scatterplot of correlation
+corr.square <-
+  ggscatter(
+    corr,
+    x = "whole",
+    y = "square.diff",
+    color = "location",
+    add = "reg.line",
+    conf.int = TRUE,
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    label.x.npc = "middle",
+    label.y.npc = "top",
+    xlab = "Model Area (m2)",
+    ylab = "Shape Error (cm2)"
+    #main = "Square"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  stat_cor(method = "spearman", aes(label = paste(..r.label.., ..p.label.., sep = "~','~"), color=location))
+corr.square
+
+# takes the legend and saves it as a separate object (grob)
+get_legend<-function(corr.square){
+  tmp <- ggplot_gtable(ggplot_build(corr.square))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+legend=get_legend(corr.square)
+
+# removes legend
+corr.square <- corr.square + theme_bw()
+corr.square <- corr.square + rremove("legend")
+
+corr.rectangle <-
+  ggscatter(
+    corr,
+    x = "whole",
+    y = "rectangle.diff",
+    color = "location",
+    add = "reg.line",
+    conf.int = TRUE,
+    palette = c("grey", "#3070cf", "#79d7fb")
+    #main = "Rectangle"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  stat_cor(method = "spearman", aes(label = paste(..r.label.., ..p.label.., sep = "~','~"), color=location)) + 
+  labs(x = "Model Area (m2)",
+       y = element_blank(),
+       #title = "Circle",
+       fill = 'Location') +
+  theme_bw() +
+  rremove("legend")
+corr.rectangle
+
+corr.circle <-
+  ggscatter(
+    corr,
+    x = "whole",
+    y = "circle.diff",
+    color = "location",
+    add = "reg.line",
+    conf.int = TRUE,
+    palette = c("grey", "#3070cf", "#79d7fb"),
+    xlab = "Model Area (m2)",
+    ylab = FALSE
+    #main = "Circle"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  stat_cor(method = "spearman", aes(label = paste(..r.label.., ..p.label.., sep = "~','~"), color=location)) + 
+  labs(x = "Model Area (m2)",
+       y = element_blank(),
+       #title = "Circle",
+       fill = 'Location') +
+  theme_bw() + 
+  rremove("legend")
+corr.circle
+
+plot3=grid.arrange(corr.square, corr.rectangle, corr.circle, legend, ncol=3, nrow=2, layout_matrix=rbind(c(1,2,3),c(4,4,4)), widths=c(3.1,3,3), heights=c(3,0.25))
+
+#saves plot as PDF (transparent CI won't export as EPS)
+ggsave("corr_area_error.pdf", plot= plot3, width=12, height=4, units="in", dpi=300)
+
+# so, there may be a sig increase in shape measurement error as model area increases, but depending on location (stlucie)
+
+#-----------------------------------
+####all figure multiplot####
+
+# multiplot of all generated figures
+
+multiplot=grid.arrange(square.box, rectangle.box, circle.box, square.diff.box, rectangle.diff.box, circle.diff.box, corr.square, corr.rectangle, corr.circle, legend, ncol=3, nrow=4, layout_matrix=rbind(c(1,2,3),c(4,5,6),c(7,8,9),c(10,10,10)), widths=c(3.1,3,3), heights=c(3,3,3,0.25))
+
+ggsave("prism_area_error_panel.pdf", plot= multiplot, width=12, height=12, units="in", dpi=300)

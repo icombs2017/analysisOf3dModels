@@ -1,0 +1,4 @@
+"",".y.","p","p.adj","p.format","p.signif","method"
+"1","square.sqrt",0.1015512652926,0.1,"0.1","ns","Kruskal-Wallis"
+"2","rectangle.sqrt",4.42272981714385e-05,4.4e-05,"4.4e-05","****","Kruskal-Wallis"
+"3","circle.sqrt",0.10698636507685,0.11,"0.11","ns","Kruskal-Wallis"
