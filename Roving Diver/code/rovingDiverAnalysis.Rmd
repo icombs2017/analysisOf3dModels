@@ -41,7 +41,7 @@ For the following analyses we will require the use of a number of different R pa
 ```{r, packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 
 if (!require("pacman")) install.packages("pacman") 
-pacman::p_load(ggplot2, stringr, gridExtra, ggpubr, Rmisc, FSA, rcompanion, RColorBrewer, dplyr, vegan, nparcomp, RVAideMemoire, MANOVA.RM, pairwiseAdonis, PMCMR, PMCMRplus, patchwork, plyr, gdata, flextable, officer)
+pacman::p_load(ggplot2, stringr,dplyr, vegan, pairwiseAdonis, patchwork, flextable, officer)
 pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
 ```
@@ -259,6 +259,14 @@ county.prev
 ggsave("../figures/countyPrev.png", plot = county.prev,height = 9, width = 9, units = 'in', dpi = 600)
 
 ```
+
+<br><br>
+
+# Reporting averages
+***
+Below is the script to get some quick 
+
+
 
 ```{r, Species.Stats}
 head(rd.site)
