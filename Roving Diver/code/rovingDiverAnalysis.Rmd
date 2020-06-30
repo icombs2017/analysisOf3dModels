@@ -36,11 +36,11 @@ library(magrittr)
 ***
 
 ## Loading required packages
-For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some may be downloaded from GitHub. We can use the following code to load in the packages and install any packages not previously installed in the R console. 
+For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some may be downloaded from GitHub. We can use the following code to load in the packages and install any packages not previously installed in the R console.
 
 ```{r, packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 
-if (!require("pacman")) install.packages("pacman") 
+if (!require("pacman")) install.packages("pacman")
 pacman::p_load(ggplot2, stringr,dplyr, vegan, pairwiseAdonis, patchwork, flextable, officer, gdata)
 pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
@@ -54,16 +54,16 @@ Loading the data set into R. All analyses are conducted from a master spreadshee
 This data set contains a count of "TMTC" or "too many to count" so we are adding a line of `na.strings = "TMTC"` which will take that string and treat it as an NA. This is so we can manipulate that column as integers. `na.strings` can be expanded to include other qualifiers if necessary. We included the code `class(rd$TotalHealthy)` to ensure that the column containing the "TMTC" input is being read as an integer and that the `na.strings = "TMTC"` worked. We are calling it `rd` for "roving diver" which is the type of surveys these are.
 
 ```{r, load, include = "true"}
-rd <- read.xls("../data/RovingDiverSurveysManuscript.xlsx", head = T, na.strings ="TMTC")
+rd <- read.xls("../data/RovingDiverSurveys.xlsx", head = T, na.strings ="TMTC")
 class(rd$Healthy)
 head(rd)
 ```
 
 # Data manipulation
 ***
-One of the purposes of this pipeline is to manipulate the data set a number of ways in order to achieve specific outputs for reports. We are going to mainly do this using the package `dplyr`. We are doing these manipulations and calculations in `R` to prevent manipulation of the master database and to ensure continuity and consistency throughout this longterm monitoring project. 
+One of the purposes of this pipeline is to manipulate the data set a number of ways in order to achieve specific outputs for reports. We are going to mainly do this using the package `dplyr`. We are doing these manipulations and calculations in `R` to prevent manipulation of the master database and to ensure continuity and consistency throughout this longterm monitoring project.
 
-Our first step is to format the dates they can be read by `R`. Reading the data in from the excel spreadsheet, R recognizes the Date column as a Date format (if you read your data in as a csv file this won't happen). The data is read as YYY/MM/DD, but often it is helpful to parse things out by Month or by Year so we are adding a column using a M-Y format. This same code can be changed to include a YYYY format as well. 
+Our first step is to format the dates they can be read by `R`. Reading the data in from the excel spreadsheet, R recognizes the Date column as a Date format (if you read your data in as a csv file this won't happen). The data is read as YYY/MM/DD, but often it is helpful to parse things out by Month or by Year so we are adding a column using a M-Y format. This same code can be changed to include a YYYY format as well.
 
 ```{r, dateFormat, include = TRUE }
 rd$MonthYear = format(as.Date(as.Date(rd$Date), format = "%y/%m/%d"), "%m-%y")
@@ -75,10 +75,10 @@ We see that we have MonthYear at the end of the dataset and Date is now in a YYY
 
 <br><br>
 
-We also want to add a few more columns like **County**, **Location**, **Total Observations**, and **Prevalence**. We will start with adding **County** and **Location**. <br><br>Our dataset includes surveys across three counties, at four different locations, but they are entered into the data set at the individual site level (**SiteCode**). It is often helpful, especially when reporting, to report at the County level or even by location. **SiteCode** is the individual sites where surveys occur (ex: SEFL05, T328, BC1, etc), **Location** is the general area where operations occur (ex: Jupiter, Lauderdale-by-the-Sea), and **County** is the county where operations occur (ex: Martin County, Palm Beach County, and Broward County). 
+We also want to add a few more columns like **County**, **Location**, **Total Observations**, and **Prevalence**. We will start with adding **County** and **Location**. <br><br>Our dataset includes surveys across three counties, at four different locations, but they are entered into the data set at the individual site level (**SiteCode**). It is often helpful, especially when reporting, to report at the County level or even by location. **SiteCode** is the individual sites where surveys occur (ex: SEFL05, T328, BC1, etc), **Location** is the general area where operations occur (ex: Jupiter, Lauderdale-by-the-Sea), and **County** is the county where operations occur (ex: Martin County, Palm Beach County, and Broward County).
 
 ```{r, countyLocation, include = TRUE }
-rd$County = if_else(rd$SiteCode %in% c("SEFL01", "SEFL02", "SEFL03", "SLR South", "SLR Central", "SLR Ledge", "SLR North"), "Martin", 
+rd$County = if_else(rd$SiteCode %in% c("SEFL01", "SEFL02", "SEFL03", "SLR South", "SLR Central", "SLR Ledge", "SLR North"), "Martin",
                        if_else(rd$SiteCode %in% c("T328", "BC1", "FTL4"), "Broward", "Palm Beach"))
 
 rd$Location= if_else(rd$SiteCode %in% c("SEFL01", "SEFL02", "SEFL03", "SLR South", "SLR Central", "SLR Ledge", "SLR North"), "SLR",
@@ -98,41 +98,37 @@ rd$TotalObservations <- rd$UK + rd$DS + rd$BB + rd$RB + rd$YB + rd$SCTLD + rd$WP
 head(rd)
 ```
 
-# Subsetting by Sites
+
+
+
+# Subsetting by Date
 ***
-For the purposes of this manuscript, we want to block certain sites out, early on certain sites were used for exploratory purposes, but were only surveyed once and not included in this study. Here I am only including our thirteen monitoring sites. We are calling it `rd.site` to reflect that. Note: SEFL01 and SEFL02 are also SLR Central and SLR South and were used early on in our exploratory surveys.
+For the purposes of reporting, you might want to block certain dates out, and only report on certain dates. Here, as an example, we are subsetting everything before July 3, 2019. This code can be modified to capture any time period you may need. We are calling it `rd.early` because it encapsulates the early days of our surveys. I am also subsetting for only our longterm monitoring sites.
 
-```{r, subsetSite, include = TRUE}
-rd.site <- subset(rd, SiteCode %in% c("SEFL01", "SEFL02", "SEFL04", "SEFL05", "SEFL06", "SEFL08", "SEFL11", "SEFL12", "SLR North", "SLR South", "SLR Central", "SLR Ledge", "BC1", "T328", "FTL4")) 
+```{r, subsetDate, include = TRUE}
+rd.early <- filter(rd, Date < "2019-07-03") %>%  
+  subset(SiteCode %in% c("SEFL01", "SEFL02", "SEFL04", "SEFL05", "SEFL06", "SEFL08", "SEFL11", "SEFL12", "SLR North", "SLR South", "SLR Central", "SLR Ledge", "BC1", "T328", "FTL4"))
 
-head(rd.site)
-tail(rd.site)
+head(rd.early)
+tail(rd.early)
 ```
+Checking to see that we have our earliest date `head(rd.early)` and our cut-off date `tail(rd.early)` to confirm the subset worked.
+<br><br>
 
-
-
-
-# Tabulating Data 
+# Tabulating Data
 ***
-Currently the data set has very high resolution, to species level. Now, using `dplyr` we will tabulate the data into a more concise form. Sometimes packages mask other packages so I am specifying that I want to use the function `select` from the package `dplyr` by using the following: `dplyr::select`.
+Currently the data set has very high resolution, to species level, which may not be necessary for certain reports. Now, using `dplyr` we will tabulate the data into a more concise form. In this example we are assuming that we need to report on data from the time frame we subsetted earlier (November 2017 - June 2019), and the report only needs to know prevalence data by County. Sometimes packages mask other packages so I am specifying that I want to use the function `select` from the package `dplyr` by using the following: `dplyr::select`.
 
 ```{r, countyData, include = TRUE}
-countyData <- rd.site %>% dplyr::select(c(SiteCode, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>% group_by(SiteCode,MonthYear,County) %>% summarise_if(is.integer, sum) %>% ungroup()
-countyData 
-class(countyData$MonthYear)
-countyData$MonthYear <- as.factor(countyData$MonthYear)
-class(countyData$MonthYear)
-levels(countyData$MonthYear)
-countyData$MonthYear <- factor(countyData$MonthYear, levels(countyData$MonthYear)[c(10, 12, 3, 5, 7, 9, 11, 13, 1, 2, 4, 6, 8)])
-levels(countyData$MonthYear)
-
+countyData <- rd.early %>% dplyr::select(c(SiteCode, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>% group_by(SiteCode,MonthYear,County) %>% summarise_if(is.integer, sum)
+countyData
 ```
-To summarize: I am selecting (`dplyr::select()`) from the data the columns of **SiteCode**, **County**, **MonthYear**, **SpeciesCode**, **TLD**, and **TotalObservations**. grouping them (`group_by()`) by  **SiteCode**, **MonthYear**, and **County**; and adding (`summarise_if(is.integer, sum)`) all integers found in that subset (in this case **TLD** and **TotalObservations**). 
+To summarize: I am selecting (`dplyr::select()`) from the data the columns of **SiteCode**, **County**, **MonthYear**, **SpeciesCode**, **TLD**, and **TotalObservations**. grouping them (`group_by()`) by  **SiteCode**, **MonthYear**, and **County**; and adding (`summarise_if(is.integer, sum)`) all integers found in that subset (in this case **TLD** and **TotalObservations**).
 
 <br><br>
 # Calculating Prevalence Data
 ***
-We want to calculate SCTLD disease prevalence at our monitoring sites. To do this, we will calculate prevalence by diving our SCTLD observations (**TLD**) from our total number of observations (**TotalObservations**). The syntax used here is very similar to the way we calculated **TotalObservations**. 
+We want to calculate SCTLD disease prevalence at our monitoring sites. To do this, we will calculate prevalence by diving our SCTLD observations (**TLD**) from our total number of observations (**TotalObservations**). The syntax used here is very similar to the way we calculated **TotalObservations**.
 
 ```{r, prevalence, include = TRUE}
 countyData$Prevalence = countyData$SCTLD/countyData$TotalObservations
@@ -143,14 +139,15 @@ You can see that we added a **Prevalence** column to the data set!
 
 # Running PERMANOVA in R
 ***
-Now our report needs some analyses. Here we want to see if our prevalence data varies between counties and through time. We will be using a PERMANOVA in R to assess this. We will use the ```adonis()``` function in *vegan*. 
+Now our report needs some analyses. Here we want to see if our prevalence data varies between counties and through time. We will be using a PERMANOVA in R to assess this. We will use the ```adonis()``` function in *vegan*.
 
 ```{r, permanova, include = TRUE}
 
 set.seed(999)
-prev.perm <- adonis(formula = Prevalence ~ County*MonthYear, data = countyData, method = "euclidian", na.rm = TRUE)
+adonis(formula = Prevalence ~ County*MonthYear, data = countyData, method = "euclidian")
+
 ```
-County is significantly different, but Time is not. 
+County is significantly different, but Time is not.
 
 <br><br>
 
@@ -158,131 +155,244 @@ Now lets conduct a pairwise comparison to determine which county (or counties) i
 
 ```{r, pairwisePERMANOVA, incldue = TRUE}
 set.seed(999)
-prev.pairwise <- pairwise.adonis(countyData[c(6)],factors=countyData$County,
+pairwise.adonis(countyData[c(6)],factors=countyData$County,
                              sim.method='euclidian',p.adjust.m='bonferroni', perm = 999)
 
 ```
-
-
-<br><br>
-
-Now we are tabulating the data into a publication ready table.
-```{r, prevalencePermTab, include = TRUE, ft.align = "left"}
-
-prevPermTab = data.frame("Test" = "PERMANOVA", "Comparison" = "County", "pseudo.F" = prev.perm$aov.tab$F.Model[1], "p.value" = prev.perm$aov.tab$`Pr(>F)`[1]) %>% 
-  add_row("Test" = " ", "Comparison" = "Date", "pseudo.F" = prev.perm$aov.tab$F.Model[2], "p.value" = prev.perm$aov.tab$`Pr(>F)`[2]) %>% 
-  add_row("Test" = " ", "Comparison" = "County:Date", "pseudo.F" = prev.perm$aov.tab$F.Model[3], "p.value" = prev.perm$aov.tab$`Pr(>F)`[3]) %>% 
-  add_row("Test" = c("Pairwise", replicate(nrow(prev.pairwise)-1,"")), "Comparison" = prev.pairwise$pairs, "pseudo.F" = prev.pairwise$F.Model, "p.value" = prev.pairwise$p.adjusted) %>%
-  
-mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
-mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
-mutate_if(is.character, str_replace_all, pattern = "vs", replacement = "–") %>%
-flextable() %>%
-set_header_labels(Data.set = "Data set") %>% 
-flextable::compose(part = "header", j = "pseudo.F", value = as_paragraph("Psuedo-", as_i("F"))) %>%
-flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
-autofit() %>%
-font(fontname = "Times New Roman", part = "all") %>%
-fontsize(size = 12, part = "all") %>%
-bold(part = "header") %>% 
-colformat_num(j = "pseudo.F", digits = 2) %>%
-colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
-align(align = "center", j = "p.value") %>% 
-align(align = "center", j = "p.value")
-
-
-
-prevPermanovaDoc = read_docx()
-prevPermanovaDoc = body_add_flextable(prevPermanovaDoc, value = prevPermTab)
-print(prevPermanovaDoc, target = "../tables/prevalencePermanovaTable.docx")
-prevPermTab
-
-
-
-
-```
-
 We see that Palm Beach County is significantly different from both Martin County and Broward County. Now its time to visualize this data!
 
-
-<br><br>
-
-
-
-
+<br><br>.
 
 # Data Visualization
 ***
-We will now make a number of plots to visualize this prevalence data. The first is plotting disease prevalence at each site over time, grouped by each county. But first we need to subset by **County**. Just a note, *SEFL01* and *SEFL02* are actually *SLR Central* and *SLR South*, respectively. For plotting purposes I am renaming them. I am also arranging the factor levels chronologically. 
+We will now make a number of plots to visualize this prevalence data. The first is plotting disease prevalence at each site over time, grouped by each county. But first we need to subset by **County**. Just a note, *SEFL01* and *SEFL02* are actually *SLR Central* and *SLR South*, respectively. For plotting purposes I am renaming them. I am also arranging the factor levels chronologically.
+
+```{r, countySubset, include = TRUE, resulsts = "hide"}
+
+martin <- subset(countyData, County == "Martin")
+
+class(martin$MonthYear)
+martin$MonthYear <- as.factor(martin$MonthYear)
+levels(martin$MonthYear)
+martin$MonthYear = factor(martin$MonthYear, levels(martin$MonthYear)[c(4, 1, 2, 3)])
+levels(martin$MonthYear)
+levels(martin$SiteCode)[levels(martin$SiteCode) == "SEFL01"] <- "SLR Central"
+levels(martin$SiteCode)[levels(martin$SiteCode) == "SEFL02"] <- "SLR South"
+levels(martin$SiteCode)
 
 
+palm <- subset(countyData, County == "Palm Beach")
+class(palm$MonthYear)
+palm$MonthYear <- as.factor(palm$MonthYear)
+levels(palm$MonthYear)
+palm$MonthYear = factor(palm$MonthYear, levels(palm$MonthYear)[c(9, 3, 4, 6, 8, 10, 1, 2, 5, 7)])
+levels(palm$MonthYear)
 
+broward <- subset(countyData, County == "Broward")
+class(broward$MonthYear)
+broward$MonthYear <- as.factor(broward$MonthYear)
+levels(broward$MonthYear)
+broward$MonthYear = factor(broward$MonthYear, levels(broward$MonthYear)[c(4,5,1,2,3)])
+levels(broward$MonthYear)
 
-
-```{r, Plot, include = TRUE, ft.align = "left"}
-countyPlot <- countyData %>% 
-  dplyr::select(c(County, MonthYear, Prevalence)) %>% 
-  group_by(MonthYear,County) %>% 
-  add_count() %>%  
-  summarise(avgPrevalence = mean(Prevalence), n = max(n), sd = sd(Prevalence), stderror = sd(Prevalence)/sqrt(n))
-
-
-
-county.prev1 <- ggplot(countyPlot, aes(MonthYear, avgPrevalence, group = County, color = County))+
-  geom_point()+
-  geom_line()+
-  geom_errorbar(aes(ymin = avgPrevalence - stderror, 
-                    ymax = avgPrevalence + stderror),
-                    width = 0.5)+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
-  ylim(0,0.5)+
-  #facet_wrap(~County, scale = "free")+
-  labs(y = "Prevalence", x = "Month")
-
-county.prev1
-
-county.prev <- county.prev1 + theme(
-  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
-  panel.background = element_rect(fill = '#F5F5F5'), 
-  plot.title = element_text(hjust = 0.5), 
-  axis.line = element_line(colour = "black"), 
-  axis.ticks = element_line(color="black"), 
-  text = element_text(size=20, color="black"), 
-  axis.text.x=element_text(angle = 45, hjust = 1, size=14, color="black"), 
-  axis.text.y=element_text(size=12, color="black")
-)
-
-county.prev
-
-
-
-ggsave("../figures/countyPrev.png", plot = county.prev,height = 9, width = 9, units = 'in', dpi = 600)
 
 ```
 
 <br><br>
+Plot for Martin County
+```{r, martin plot, include = TRUE, fig.width = 12, fig.height = 8}
 
-# Reporting averages
-***
-Below is the script to get some quick 
+martin.prev.plot1 <-
+  ggplot(martin, aes(x=MonthYear, y=Prevalence, color = SiteCode, group = SiteCode, label=SiteCode))+
+  geom_line(size = 1)+
+  geom_point(size = 2)+
+  labs(y = "Prevalence")+
+    annotate("label", x = 2.45, y = 0.45, label = paste ("Martin County"), size = 5)+
+  scale_x_discrete(limits = c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels = c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+  labs(color = "Site")+
+  ylim(0,0.5)
+
+# takes the legend and saves it as a separate object (grob)
+get_legend<-function(martin.prev.plot1){
+  tmp <- ggplot_gtable(ggplot_build(martin.prev.plot1))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  martin.legend <- tmp$grobs[[leg]]
+  return(martin.legend)
+}
+martin.legend=get_legend(martin.prev.plot1)
 
 
 
-```{r, Species.Stats}
-head(rd.site)
+martin.prev.plot <- martin.prev.plot1 +
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+        panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        axis.ticks = element_line(color="black"),
+        text = element_text(size=15, color="black"),
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_text(size=12, color="black")
+        )
 
-rd.species <- rd.site %>% 
-  dplyr::select(c(SpeciesCode, SCTLD, TotalObservations)) %>% 
-  group_by(SpeciesCode) %>% summarise_if(is.integer, sum) %>% ungroup()
 
-head(rd.species)
-
-rd.species$Prevalence <- rd.species$SCTLD/rd.species$TotalObservations
-head(rd.species)
+martin.prev.plot
 
 
+
+```
+<br><br>
+
+Plot for Palm Beach County
+```{r, palm plot, include = TRUE, results = 'hide'}
+palm.prev.plot1 <-
+  ggplot(palm, aes(x=MonthYear, y=Prevalence, color = SiteCode, group = SiteCode, label = SiteCode))+
+  geom_line()+
+  geom_point()+
+  annotate("label", x = 2.45, y = 0.45, label = paste ("Palm Beach County"), size = 5)+
+  scale_x_discrete(limits = c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels = c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+    labs(color = "Site")+
+  ylim(0,0.5)
+
+
+# takes the legend and saves it as a separate object (grob)
+legend<-function(palm.prev.plot1){
+  tmp <- ggplot_gtable(ggplot_build(palm.prev.plot1))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  martin.legend <- tmp$grobs[[leg]]
+  return(palm.legend)
+}
+palm.legend=get_legend(palm.prev.plot1)
+
+
+
+palm.prev.plot <- palm.prev.plot1+
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+        panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        axis.ticks = element_line(color="black"),
+        text = element_text(size=15, color="black"),
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_text(size=12, color="black")
+        )
+
+palm.prev.plot
+```
+<br><br>
+
+Plot for Broward County
+```{r, broward plot, include = TRUE}
+broward.prev.plot1 <-
+  ggplot(broward, aes(x=MonthYear, y=Prevalence, color = SiteCode, group = SiteCode, label = SiteCode))+
+  geom_line()+
+  geom_point()+
+  scale_x_discrete(limits = c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels = c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+  ylim(0,0.5)+
+  annotate("label", x = 2.45, y = 0.45, label = paste ("Broward County"), size = 5) +
+  labs(y = "Prevalence", x = "Month", color = "Site")
+
+
+
+legend<-function(broward.prev.plot1){
+  tmp <- ggplot_gtable(ggplot_build(broward.prev.plot1))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  martin.legend <- tmp$grobs[[leg]]
+  return(broward.legend)
+}
+broward.legend=get_legend(broward.prev.plot1)
+
+
+broward.prev.plot <- broward.prev.plot1+
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+        panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        axis.ticks = element_line(color="black"),
+        text = element_text(size=15, color="black"),
+        axis.text.x=element_text(angle = 45, hjust = 1,size=12, color="black"),
+        axis.text.y=element_text(size=12, color="black")
+        )
+
+broward.prev.plot
+```
+<br><br>
+
+You might have noticed that only the Broward County plot had labels and titles along the x-axis. That is because we are going to stack the plots using *patchwork* and saving it in our figures folder.
+
+
+```{r, stacked plot, include = TRUE, fig.width = 12, fig.height = 8}
+
+stacked.plot <- (martin.prev.plot / palm.prev.plot / broward.prev.plot)
+
+ggsave("../figures/site.prevalence.png", plot= stacked.plot, width=12, height=8, units="in", dpi=600)
+
+stacked.plot
 
 ```
 
 
 
+```{r}
+
+g.error.prev <- ggplot(g.prev, aes(date, prevalence, group = location, fill = location, color = location))+
+  geom_point()+
+  geom_line()+
+  geom_errorbar(aes(ymin = prevalence - stderror,
+                    ymax = prevalence + stderror),
+                width = .5)+
+  theme(plot.title = element_text(hjust = 0.5), axis.line = element_line(colour = "black"), axis.ticks = element_line(color="black"), text = element_text(size=15, color="black"), axis.text.x=element_text(size=12, color="black"), axis.text.y=element_text(size=12, color="black")) +
+  #stat_summary(geom = 'errorbar', fun.data = mean_se, position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("Nov.17","Dec.17","Jan.18", "Apr.18", "May.18", "Jun.18", "Aug.18", "Nov.18", "Dec.18", "Feb.19", "Mar.19", "Apr.19", "May.19", "Jun.19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+  ylim(0,0.5)+
+  labs(y = "Prevalence", x = "Month")
+g.error.prev
+
+g.error.prev <- g.error.prev + theme(
+                panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+                plot.title = element_text(hjust = 0.5),
+                axis.line = element_line(colour = "black"),
+                axis.ticks = element_line(color="black"),
+                text = element_text(size=20, color="black"),
+                axis.text.x=element_text(angle = 45, hjust = 1, size=14, color="black"),
+                axis.text.y=element_text(size=12, color="black")
+                )
+
+
+
+
+ggsave("prev.global.eps", plot= g.error.prev, width=12, height=8, units="in", dpi=600)
+
+#gainsboro = #DCDCDC
+#light gray = #D3D3D3
+#white smoke = #F5F5F5
+
+prev <- read.csv("prev.county.csv", header = TRUE)
+head(prev)
+
+
+error.prev <- ggplot(prev, aes(date, prevalence, group = county, fill = county, color = county))+
+  geom_point()+
+  geom_line()+
+  geom_errorbar(aes(ymin = prevalence - stderror,
+                    ymax = prevalence + stderror),
+                width = 0.5)+
+  #stat_summary(geom = 'errorbar', fun.data = mean_se, position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("Nov.17","Dec.17","Jan.18", "Apr.18", "May.18", "Jun.18", "Aug.18", "Nov.18", "Dec.18", "Feb.19", "Mar.19", "Apr.19", "May.19", "Jun.19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+  ylim(0,0.5)+
+  labs(y = "Prevalence", x = "Month")
+error.prev
+
+error.prev <- error.prev+ theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+  plot.title = element_text(hjust = 0.5),
+  axis.line = element_line(colour = "black"),
+  axis.ticks = element_line(color="black"),
+  text = element_text(size=20, color="black"),
+  axis.text.x=element_text(angle = 45, hjust = 1, size=14, color="black"),
+  axis.text.y=element_text(size=12, color="black")
+)
+ggsave("prev.county.eps", plot= error.prev, width=12, height=8, units="in", dpi=600)
+
+```
