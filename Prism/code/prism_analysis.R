@@ -28,11 +28,8 @@ shapiro.test(model$area)
 # testing for difference between model areas by location
 model.anova <- aov(area~location, data = model)
 summary(model.anova)
-# Df Sum Sq Mean Sq F value   Pr(>F)    
-# location     2  65.66   32.83   18.21 7.54e-05 ***
-#   Residuals   16  28.85    1.80                     
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+capture.output(summary(model.anova), file = "ANOVA_model_outputs.csv")
 
 # calculates mean and SD by location
 aggregate(area ~ location, model, mean)
@@ -132,32 +129,17 @@ boxplot(area.disp)
 # typically 9999 permutations are sufficient, but model terms were close to 0.05, so running with a million permutations
 area.perm <- adonis(area.dist ~ location*location/model*face, data=prism, strata = prism$model, permutations = 1e6, parallel = getOption("mc.cores"))
 area.perm
-# Call:
-#   adonis(formula = area.dist ~ location * location/model * face,      data = prism, permutations = 1e+06, strata = prism$model,      parallel = getOption("mc.cores")) 
-# 
-# Blocks:  strata 
-# Permutation: free
-# Number of permutations: 1e+06
-# 
-# Terms added sequentially (first to last)
-# 
-# Df SumsOfSqs MeanSqs F.Model      R2   Pr(>F)   
-# location              3     1.819 0.60620  7.0671 0.04538 0.055487 . 
-# face                  4     1.020 0.25511  2.9741 0.02546 0.051399 . 
-# location:model       16    11.105 0.69403  8.0911 0.27707 0.042872 * 
-#   location:face         8     1.837 0.22966  2.6773 0.04584 0.009764 **
-#   location:model:face  54     5.084 0.09414  1.0975 0.12684 0.368757   
-# Residuals           224    19.214 0.08578         0.47941            
-# Total               309    40.079                 1.00000            
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
+write.csv(area.perm$aov.tab, file = "PERMANOVA_area_outputs.csv")
 # Significant differences between location and prism face, but not among models within location
 
 # pairwise PERMANOVA based on significant factors (model)
 model.pair <- pairwise.adonis2(area.dist ~ model, data = prism, strata = 'model', nperm = 1e6)
 model.pair
-# results too large for here
+
+model.pair.out <- bind_rows(model.pair$pool1_vs_pool3, model.pair$pool1_vs_pool4, model.pair$pool1_vs_pool5, model.pair$pool1_vs_pool6, model.pair$pool1_vs_pool7, model.pair$pool3_vs_pool4, model.pair$pool3_vs_pool5, model.pair$pool3_vs_pool6, model.pair$pool3_vs_pool7, model.pair$pool4_vs_pool5, model.pair$pool4_vs_pool6, model.pair$pool4_vs_pool7, model.pair$pool5_vs_pool6, model.pair$pool5_vs_pool7, model.pair$pool6_vs_pool7, model.pair$lbts1_vs_lbts2, model.pair$lbts1_vs_lbts3, model.pair$lbts1_vs_lbts5, model.pair$lbts1_vs_lbts6, model.pair$lbts1_vs_lbts7, model.pair$lbts1_vs_lbts8, model.pair$lbts2_vs_lbts3, model.pair$lbts2_vs_lbts5, model.pair$lbts2_vs_lbts6, model.pair$lbts2_vs_lbts7, model.pair$lbts2_vs_lbts8, model.pair$lbts3_vs_lbts5, model.pair$lbts3_vs_lbts6, model.pair$lbts3_vs_lbts7, model.pair$lbts3_vs_lbts8, model.pair$lbts5_vs_lbts6, model.pair$lbts5_vs_lbts7, model.pair$lbts5_vs_lbts8, model.pair$lbts6_vs_lbts7, model.pair$lbts6_vs_lbts8, model.pair$lbts7_vs_lbts8, model.pair$slr1_vs_slr2, model.pair$slr1_vs_slr6, model.pair$slr1_vs_slr7, model.pair$slr1_vs_slr8, model.pair$slr1_vs_slr9, model.pair$slr2_vs_slr6, model.pair$slr2_vs_slr7, model.pair$slr2_vs_slr8, model.pair$slr2_vs_slr9, model.pair$slr6_vs_slr7, model.pair$slr6_vs_slr8, model.pair$slr6_vs_slr9, model.pair$slr7_vs_slr8, model.pair$slr7_vs_slr9, model.pair$slr8_vs_slr9, .id = "Comparison")
+model.pair.out
+write.csv(model.pair.out, file = "PERMANOVA_area_model_outputs.csv")
 
 #------------------------------------
 ####Kruskal-Wallis####
@@ -376,38 +358,31 @@ boxplot(error.disp)
 # model is nested within location using '/', and is accounted as a random factor using 'strata'
 error.perm <- adonis(error.dist ~ location*location/model*face, data=prism.sub, strata = prism.sub$model, permutations = 1e6, parallel = getOption("mc.cores"))
 error.perm
-# Call:
-#   adonis(formula = error.dist ~ location * location/model * face,      data = prism.sub, permutations = 1e+06, strata = prism.sub$model,      parallel = getOption("mc.cores")) 
-# 
-# Blocks:  strata 
-# Permutation: free
-# Number of permutations: 1e+06
-# 
-# Terms added sequentially (first to last)
-# 
-# Df SumsOfSqs MeanSqs F.Model      R2   Pr(>F)    
-# location              2    30.930 15.4648 29.5887 0.11021 0.000246 ***
-#   face                  4     8.373  2.0932  4.0050 0.02983 0.006711 ** 
-#   location:model       16    70.375  4.3985  8.4156 0.25076  4.3e-05 ***
-#   location:face         8    11.816  1.4769  2.8258 0.04210 0.003446 ** 
-#   location:model:face  54    42.085  0.7794  1.4911 0.14995 0.023312 *  
-#   Residuals           224   117.075  0.5227         0.41715             
-# Total               308   280.654                 1.00000             
-# ---
-#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
+write.csv(error.perm$aov.tab, file = "PERMANOVA_error_outputs.csv")
 # Significant differences among all main factors
 
 # pairwise PERMANOVA based on significant factors
 location.error.pair <- pairwise.adonis2(error.dist ~ location, data = prism.sub, strata = 'model', nperm = 1e6)
 location.error.pair
 
+location.error.pair.out <- bind_rows(location.error.pair$Pool_vs_LBTS, location.error.pair$Pool_vs_SLR, location.error.pair$LBTS_vs_SLR, .id = "Comparison")
+location.error.pair.out
+write.csv(location.error.pair.out, file = "PERMANOVA_error_location_outputs.csv")
+
 model.error.pair <- pairwise.adonis2(error.dist ~ model, data = prism.sub, strata = 'model', nperm = 1e6)
 model.error.pair
 
+model.error.pair.out <- bind_rows(model.error.pair$pool1_vs_pool3, model.error.pair$pool1_vs_pool4, model.error.pair$pool1_vs_pool5, model.error.pair$pool1_vs_pool6, model.error.pair$pool1_vs_pool7, model.error.pair$pool3_vs_pool4, model.error.pair$pool3_vs_pool5, model.error.pair$pool3_vs_pool6, model.error.pair$pool3_vs_pool7, model.error.pair$pool4_vs_pool5, model.error.pair$pool4_vs_pool6, model.error.pair$pool4_vs_pool7, model.error.pair$pool5_vs_pool6, model.error.pair$pool5_vs_pool7, model.error.pair$pool6_vs_pool7, model.error.pair$lbts1_vs_lbts2, model.error.pair$lbts1_vs_lbts3, model.error.pair$lbts1_vs_lbts5, model.error.pair$lbts1_vs_lbts6, model.error.pair$lbts1_vs_lbts7, model.error.pair$lbts1_vs_lbts8, model.error.pair$lbts2_vs_lbts3, model.error.pair$lbts2_vs_lbts5, model.error.pair$lbts2_vs_lbts6, model.error.pair$lbts2_vs_lbts7, model.error.pair$lbts2_vs_lbts8, model.error.pair$lbts3_vs_lbts5, model.error.pair$lbts3_vs_lbts6, model.error.pair$lbts3_vs_lbts7, model.error.pair$lbts3_vs_lbts8, model.error.pair$lbts5_vs_lbts6, model.error.pair$lbts5_vs_lbts7, model.error.pair$lbts5_vs_lbts8, model.error.pair$lbts6_vs_lbts7, model.error.pair$lbts6_vs_lbts8, model.error.pair$lbts7_vs_lbts8, model.error.pair$slr1_vs_slr2, model.error.pair$slr1_vs_slr6, model.error.pair$slr1_vs_slr7, model.error.pair$slr1_vs_slr8, model.error.pair$slr1_vs_slr9, model.error.pair$slr2_vs_slr6, model.error.pair$slr2_vs_slr7, model.error.pair$slr2_vs_slr8, model.error.pair$slr2_vs_slr9, model.error.pair$slr6_vs_slr7, model.error.pair$slr6_vs_slr8, model.error.pair$slr6_vs_slr9, model.error.pair$slr7_vs_slr8, model.error.pair$slr7_vs_slr9, model.error.pair$slr8_vs_slr9, .id = "Comparison")
+model.error.pair.out
+write.csv(model.error.pair.out, file = "PERMANOVA_error_model_outputs.csv")
+
 face.error.pair <- pairwise.adonis2(error.dist ~ face, data = prism.sub, strata = 'model', nperm = 1e6)
 face.error.pair
-# results too large for here
+
+face.error.pair.out <- bind_rows(face.error.pair$side1_vs_side2, face.error.pair$side1_vs_side3, face.error.pair$side1_vs_side4, face.error.pair$side1_vs_top, face.error.pair$side2_vs_side3, face.error.pair$side2_vs_side4, face.error.pair$side2_vs_top, face.error.pair$side3_vs_side4, face.error.pair$side3_vs_top, face.error.pair$side4_vs_top, .id = "Comparison")
+face.error.pair.out
+write.csv(face.error.pair.out, file = "PERMANOVA_error_face_outputs.csv")
 
 #------------------------------------
 ####exporting/importing results####
