@@ -9,6 +9,7 @@ library(rcompanion)
 library(vegan)
 library(parallel)
 library(pairwiseAdonis)
+library(dplyr)
 
 #------------------------------------
 ####prism model area####
@@ -134,7 +135,7 @@ write.csv(area.perm$aov.tab, file = "PERMANOVA_area_outputs.csv")
 # Significant differences between location and prism face, but not among models within location
 
 # pairwise PERMANOVA based on significant factors (model)
-model.pair <- pairwise.adonis2(area.dist ~ model, data = prism, strata = 'model', nperm = 1e6)
+model.pair <- pairwise.adonis2(area.dist ~ model, data = prism)
 model.pair
 
 model.pair.out <- bind_rows(model.pair$pool1_vs_pool3, model.pair$pool1_vs_pool4, model.pair$pool1_vs_pool5, model.pair$pool1_vs_pool6, model.pair$pool1_vs_pool7, model.pair$pool3_vs_pool4, model.pair$pool3_vs_pool5, model.pair$pool3_vs_pool6, model.pair$pool3_vs_pool7, model.pair$pool4_vs_pool5, model.pair$pool4_vs_pool6, model.pair$pool4_vs_pool7, model.pair$pool5_vs_pool6, model.pair$pool5_vs_pool7, model.pair$pool6_vs_pool7, model.pair$lbts1_vs_lbts2, model.pair$lbts1_vs_lbts3, model.pair$lbts1_vs_lbts5, model.pair$lbts1_vs_lbts6, model.pair$lbts1_vs_lbts7, model.pair$lbts1_vs_lbts8, model.pair$lbts2_vs_lbts3, model.pair$lbts2_vs_lbts5, model.pair$lbts2_vs_lbts6, model.pair$lbts2_vs_lbts7, model.pair$lbts2_vs_lbts8, model.pair$lbts3_vs_lbts5, model.pair$lbts3_vs_lbts6, model.pair$lbts3_vs_lbts7, model.pair$lbts3_vs_lbts8, model.pair$lbts5_vs_lbts6, model.pair$lbts5_vs_lbts7, model.pair$lbts5_vs_lbts8, model.pair$lbts6_vs_lbts7, model.pair$lbts6_vs_lbts8, model.pair$lbts7_vs_lbts8, model.pair$slr1_vs_slr2, model.pair$slr1_vs_slr6, model.pair$slr1_vs_slr7, model.pair$slr1_vs_slr8, model.pair$slr1_vs_slr9, model.pair$slr2_vs_slr6, model.pair$slr2_vs_slr7, model.pair$slr2_vs_slr8, model.pair$slr2_vs_slr9, model.pair$slr6_vs_slr7, model.pair$slr6_vs_slr8, model.pair$slr6_vs_slr9, model.pair$slr7_vs_slr8, model.pair$slr7_vs_slr9, model.pair$slr8_vs_slr9, .id = "Comparison")
@@ -363,21 +364,21 @@ write.csv(error.perm$aov.tab, file = "PERMANOVA_error_outputs.csv")
 # Significant differences among all main factors
 
 # pairwise PERMANOVA based on significant factors
-location.error.pair <- pairwise.adonis2(error.dist ~ location, data = prism.sub, strata = 'model', nperm = 1e6)
+location.error.pair <- pairwise.adonis2(error.dist ~ location, data = prism.sub)
 location.error.pair
 
 location.error.pair.out <- bind_rows(location.error.pair$Pool_vs_LBTS, location.error.pair$Pool_vs_SLR, location.error.pair$LBTS_vs_SLR, .id = "Comparison")
 location.error.pair.out
 write.csv(location.error.pair.out, file = "PERMANOVA_error_location_outputs.csv")
 
-model.error.pair <- pairwise.adonis2(error.dist ~ model, data = prism.sub, strata = 'model', nperm = 1e6)
+model.error.pair <- pairwise.adonis2(error.dist ~ model, data = prism.sub)
 model.error.pair
 
 model.error.pair.out <- bind_rows(model.error.pair$pool1_vs_pool3, model.error.pair$pool1_vs_pool4, model.error.pair$pool1_vs_pool5, model.error.pair$pool1_vs_pool6, model.error.pair$pool1_vs_pool7, model.error.pair$pool3_vs_pool4, model.error.pair$pool3_vs_pool5, model.error.pair$pool3_vs_pool6, model.error.pair$pool3_vs_pool7, model.error.pair$pool4_vs_pool5, model.error.pair$pool4_vs_pool6, model.error.pair$pool4_vs_pool7, model.error.pair$pool5_vs_pool6, model.error.pair$pool5_vs_pool7, model.error.pair$pool6_vs_pool7, model.error.pair$lbts1_vs_lbts2, model.error.pair$lbts1_vs_lbts3, model.error.pair$lbts1_vs_lbts5, model.error.pair$lbts1_vs_lbts6, model.error.pair$lbts1_vs_lbts7, model.error.pair$lbts1_vs_lbts8, model.error.pair$lbts2_vs_lbts3, model.error.pair$lbts2_vs_lbts5, model.error.pair$lbts2_vs_lbts6, model.error.pair$lbts2_vs_lbts7, model.error.pair$lbts2_vs_lbts8, model.error.pair$lbts3_vs_lbts5, model.error.pair$lbts3_vs_lbts6, model.error.pair$lbts3_vs_lbts7, model.error.pair$lbts3_vs_lbts8, model.error.pair$lbts5_vs_lbts6, model.error.pair$lbts5_vs_lbts7, model.error.pair$lbts5_vs_lbts8, model.error.pair$lbts6_vs_lbts7, model.error.pair$lbts6_vs_lbts8, model.error.pair$lbts7_vs_lbts8, model.error.pair$slr1_vs_slr2, model.error.pair$slr1_vs_slr6, model.error.pair$slr1_vs_slr7, model.error.pair$slr1_vs_slr8, model.error.pair$slr1_vs_slr9, model.error.pair$slr2_vs_slr6, model.error.pair$slr2_vs_slr7, model.error.pair$slr2_vs_slr8, model.error.pair$slr2_vs_slr9, model.error.pair$slr6_vs_slr7, model.error.pair$slr6_vs_slr8, model.error.pair$slr6_vs_slr9, model.error.pair$slr7_vs_slr8, model.error.pair$slr7_vs_slr9, model.error.pair$slr8_vs_slr9, .id = "Comparison")
 model.error.pair.out
 write.csv(model.error.pair.out, file = "PERMANOVA_error_model_outputs.csv")
 
-face.error.pair <- pairwise.adonis2(error.dist ~ face, data = prism.sub, strata = 'model', nperm = 1e6)
+face.error.pair <- pairwise.adonis2(error.dist ~ face, data = prism.sub)
 face.error.pair
 
 face.error.pair.out <- bind_rows(face.error.pair$side1_vs_side2, face.error.pair$side1_vs_side3, face.error.pair$side1_vs_side4, face.error.pair$side1_vs_top, face.error.pair$side2_vs_side3, face.error.pair$side2_vs_side4, face.error.pair$side2_vs_top, face.error.pair$side3_vs_side4, face.error.pair$side3_vs_top, face.error.pair$side4_vs_top, .id = "Comparison")
