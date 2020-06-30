@@ -43,7 +43,6 @@ This is the analysis pipeline to analyze data generated from 3D models of fate t
 For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some must be downloaded from GitHub. We can use the following code to load in the packages and install any packages not previously installed in the R console. 
 
 ```{r,packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
-setwd("../data")
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load("ggplot2", "FSA", "officer", "gridExtra", "ggpubr", "Rmisc", "rcompanion", "RColorBrewer", "vegan", "nparcomp", "RVAideMemoire", "pairwiseAdonis", "PMCMR", "PMCMRplus", "patchwork", "magrittr","reshape2", "stringr", "dplyr", "flextable")
 pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
@@ -56,7 +55,7 @@ pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 Loading the dataset into R, and subsetting as needed, we will be making multiple subsets, subsetting by time point and by site to make things easier to workwith. 
 
 ```{r, load and subset, include = TRUE, results = "hide"}
-corr <- read.csv("../data/total.correlation.csv", header = T)
+corr <- read.csv("../data/modelSurfaceAreas.csv", header = T)
 str(corr)
 head(corr)
 
@@ -90,7 +89,7 @@ droplevels(corr.t4$date)
 # This will be used when we analyze rates of loss and disease progression
 corr.loss <- subset(corr, date != '8.24.18')
 droplevels(corr.loss$date)
-
+levels(corr.loss$date)
 
 
 # Subsetting by Site 
@@ -396,9 +395,8 @@ align(align = "center", j = "TestStatistic")
 
 
 lesionKwDoc = read_docx()
-lesionKwDoc = body_add_flextable(spearSizeDoc, value = lesionKwTab)
+lesionKwDoc = body_add_flextable(lesionKwDoc, value = lesionKwTab)
 print(lesionKwDoc, target = "../tables/lesionKwTab.docx")
-
 lesionKwTab
 
 
@@ -436,11 +434,11 @@ total.colony.box <- total.colony.box.1 + theme(
   plot.title = element_text(hjust = 0.5), 
   axis.line = element_line(colour = "black"), 
   axis.ticks = element_line(color="black"), 
-  text = element_text(size=15, color="black"), 
-  axis.text.x=element_text(size=12, color="black"), 
-  axis.text.y=element_text(size=12, color="black"),
-  axis.title.y = element_text(size = 18, color = 'black'),
-  plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"))+ 
+  text = element_text(size=20, color="black"), 
+  axis.text.x=element_text(size=14, color="black"), 
+  axis.text.y=element_text(size=14, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'))
+  #plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"))+ 
   rremove("legend")
 
 total.colony.box
@@ -471,12 +469,12 @@ healthy.colony.box <- healthy.colony.box.1 + theme(
   plot.title = element_text(hjust = 0.5), 
   axis.line = element_line(colour = "black"), 
   axis.ticks = element_line(color="black"), 
-  text = element_text(size=15, color="black"), 
-  axis.text.x=element_text(size=12, color="black"), 
-  axis.text.y=element_text(size=12, color="black"),
-  axis.title.y = element_text(size = 18, color = 'black'),
-  plot.margin = unit(c(0.5, 1, 0.5, 0.5), "cm"))+ 
-  rremove("legend")
+  text = element_text(size=20, color="black"), 
+  axis.text.x=element_text(size=14, color="black"), 
+  axis.text.y=element_text(size=14, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'))
+  #plot.margin = unit(c(0.5, 1, 0.5, 0.5), "cm"))+
+  rremove('legend')
 
 healthy.colony.box
 
@@ -502,46 +500,28 @@ disease.area.box <- disease.area.box.1 + theme(
   plot.title = element_text(hjust = 0.5), 
   axis.line = element_line(colour = "black"), 
   axis.ticks = element_line(color="black"), 
-  text = element_text(size=15, color="black"), 
-  axis.text.x=element_text(size=12, color="black"), 
-  axis.text.y=element_text(size=12, color="black"),
-  axis.title.y = element_text(size = 18, color = 'black'),
-  plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"))+ 
-  rremove("legend")
+  text = element_text(size=20, color="black"), 
+  axis.text.x=element_text(size=14, color="black"), 
+  axis.text.y=element_text(size=14, color="black"),
+  axis.title.y = element_text(size = 18, color = 'black'))
+  #plot.margin = unit(c(0.5, 1, 0.5, 0.5), "cm"))+
+  rremove('legend')
+
 
 disease.area.box
+```
 
-# Plotting box plot of mean lesion count for each site at each timepoint.
+```{r, patch.box, include = TRUE}
+box.plots.patch <- (total.colony.box | healthy.colony.box | disease.area.box) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a')
 
-lesion.count.box.1 <- ggplot(data = corr, aes(x = date, y = lesion.count))+
-  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
-  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
-  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
-  scale_x_discrete(labels = c(expression('T'[1]), expression('T'[2]), expression('T'[3]), expression('T'[4])))+
-  labs(x = "Site", y = "Number of Lesions", fill = 'Site') + 
-  scale_y_continuous(labels = scale)+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(color = "black", size = 25),
-        legend.background = element_blank())+
-  facet_grid(.~site,scales="free")
-lesion.count.box.1
+ggsave("../figures/box.plots.png", plot = box.plots.patch, width = 30, height = 10, units = "in", dpi = 600)
 
-lesion.count.box <- lesion.count.box.1 + theme(
-  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
-  panel.background = element_rect(fill = '#F5F5F5'),
-  plot.title = element_text(hjust = 0.5), 
-  axis.line = element_line(colour = "black"), 
-  axis.ticks = element_line(color="black"), 
-  text = element_text(size=15, color="black"), 
-  axis.text.x=element_text(size=12, color="black"), 
-  axis.text.y=element_text(size=12, color="black"),
-  axis.title.y = element_text(size = 18, color = 'black'),
-  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+ 
-  rremove("legend")
-
-lesion.count.box
 
 ```
+
+
+
+
 <br><br>
 
 # Correlation Plots
@@ -552,19 +532,20 @@ Here I will be showing the code for a significant and a non-significant correlat
 lesion.count.colony.size.1 <-ggplot(corr, aes(x = total.colony.size, y = lesion.count, color = site))+
   geom_point(size = 5)+
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
-  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Cattle Tag Error'~(cm^2)))+
+  labs(x = bquote('Total Colony Size'~(cm^2)), y = 'Lesion Count')+
   scale_y_continuous(labels = scale)
 
 lesion.count.colony.size <- lesion.count.colony.size.1 + 
-  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 
+        panel.background = element_rect(fill = '#F5F5F5'),
         plot.title = element_text(hjust = 0.5), 
         axis.line = element_line(colour = "black"), 
         axis.ticks = element_line(color="black"), 
-        text = element_text(size=15, color="black"), 
-        axis.text.x=element_text(size=12, color="black"), 
-        axis.text.y=element_text(size=12, color="black"),
-        axis.title.y = element_text(size = 18, color = 'black'),
-        plot.margin = unit(c(0.5, 1, 0.5, 1.75), "cm"))+
+        text = element_text(size=20, color="black"), 
+        axis.text.x=element_text(size=14, color="black"), 
+        axis.text.y=element_text(size=14, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'))+
+        #plot.margin = unit(c(0.5, 1, 0.5, 1.75), "cm"))+
   rremove("legend")
 lesion.count.colony.size 
 
@@ -585,11 +566,11 @@ lesion.count.disease.area <- lesion.count.disease.area.1 +
         plot.title = element_text(hjust = 0.5), 
         axis.line = element_line(colour = "black"), 
         axis.ticks = element_line(color="black"), 
-        text = element_text(size=15, color="black"), 
-        axis.text.x=element_text(size=12, color="black"), 
-        axis.text.y=element_text(size=12, color="black"),
-        axis.title.y = element_text(size = 18, color = 'black'),
-        plot.margin = unit(c(0.5, 1, 0.5, 1.57), "cm"))+
+        text = element_text(size=20, color="black"), 
+        axis.text.x=element_text(size=14, color="black"), 
+        axis.text.y=element_text(size=14, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'))+
+        #plot.margin = unit(c(0.5, 1, 0.5, 1.75), "cm"))+
   rremove("legend")
 lesion.count.disease.area 
 
@@ -599,39 +580,41 @@ lesion.count.disease.area
 colony.size.disease.area.1 <-ggplot(corr, aes(x = total.colony.size, y = disease.area, color = site))+
   geom_point(size = 5)+
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
-  labs(x = bquote('Total Colony Area'~(cm^2)), y = bquote('Disease Lesion Area'~(cm^2))) +
+  labs(x = bquote('Total Colony Area'~(cm^2)), y = bquote('Disease Lesion Area'~(cm^2)), color = "Site") +
   scale_y_continuous(labels = scale)
 colony.size.disease.area.1
 
 
 colony.size.disease.area <- colony.size.disease.area.1 + 
-  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 
+        panel.background = element_rect(fill = '#F5F5F5'),
         plot.title = element_text(hjust = 0.5), 
         axis.line = element_line(colour = "black"), 
         axis.ticks = element_line(color="black"), 
-        text = element_text(size=15, color="black"), 
-        axis.text.x=element_text(size=12, color="black"), 
-        axis.text.y=element_text(size=12, color="black"),
+        text = element_text(size=20, color="black"), 
+        axis.text.x=element_text(size=14, color="black"), 
+        axis.text.y=element_text(size=14, color="black"),
         axis.title.y = element_text(size = 18, color = 'black'),
-        plot.margin = unit(c(0.5, 1, 0.5, 1.5), "cm"))+
-  rremove("legend")
+        legend.position = "bottom")
+        #plot.margin = unit(c(0.5, 1, 0.5, 1.5), "cm"))
 colony.size.disease.area 
   
 ```
 <br><br>
 
-# Putting plots together using *patchwork*.
-***
-*patchwork* adds ggplot2 plots together to compose multiplot layouts using simple operators.
+
+```{r, patch.correlation, include = TRUE}
+
+correlation.plots.patch <- (colony.size.disease.area + lesion.count.colony.size + lesion.count.disease.area) / guide_area() + plot_layout(nrow = 2, guides = 'collect', heights = c(5,1)) + plot_annotation(tag_levels = 'a')
+
+ggsave("../figures/correlation.plots.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
 
 
-```{r, patch.lesion, include = TRUE}
-lesion.plots.patch <- total.colony.box + healthy.colony.box + disease.area.box + lesion.count.box + colony.size.disease.area + lesion.count.disease.area + lesion.count.colony.size + guide_area() + plot_layout(nrow = 4, guides = 'collect')+plot_annotation(tag_levels = 'a')
-
-ggsave("../figures/lesion.plots.png", plot = lesion.plots.patch, width = 20, height = 20, units = "in", dpi = 600)
 
 
 ```
+
+
 
 <br><br>
 ***
@@ -639,6 +622,27 @@ ggsave("../figures/lesion.plots.png", plot = lesion.plots.patch, width = 20, hei
 # Rates of Loss
 ***
 Rates of loss were calculated between timepoints, looking at correlations. Kruskal-Wallis Rank Sum Tests were used to determine if rates of loss varied by site, and correlation analyses were used to determine if colony metrics were related to rates of tissue loss. 
+```{r, loss.subset, include = TRUE, results = "hide"}
+#subset
+corr.loss <- subset(corr, date != "8.24.18")
+corr.loss[]<- lapply(corr.loss, function(x) if(is.factor(x)) factor(x) else x)
+levels(corr.loss$date)
+```
+
+```{r, lossFried, include = TRUE}
+
+fried.rate <- friedmanTest(y=corr.loss$rate, groups = corr.loss$date, blocks = corr.loss$colony.id)
+fried.rate 
+
+fried.loss <- friedmanTest(y=corr.loss$loss, groups = corr.loss$date, blocks = corr.loss$colony.id)
+fried.loss 
+
+
+```
+
+
+
+
 
 ```{r, loss.kw, include = TRUE }
 rate.l1.kw <- kruskal.test(loss ~ site, data = corr.t2)
@@ -649,6 +653,34 @@ rate.l2.kw
 
 rate.l3.kw <- kruskal.test(loss ~ site, data=corr.t4)
 rate.l3.kw
+```
+```{r, lossKWtab, include = TRUE, ft.align = 'left'}
+lossKwTab = data.frame("Data" = "Rate of Tissue Loss", "Test" = "Kruskal-Wallis", "Comparison" = "T1 v T2", "TestStatistic" = rate.l1.kw[["statistic"]][["Kruskal-Wallis chi-squared"]], "p.value" = rate.l1.kw[["p.value"]]) %>% 
+  add_row(data.frame("Data" = " ", "Test" =  " ", "Comparison" =  "T2 v T3 ", "TestStatistic" = rate.l2.kw[["statistic"]][["Kruskal-Wallis chi-squared"]], "p.value" = rate.l2.kw[["p.value"]])) %>% 
+add_row(data.frame("Data" = " ", "Test" =  " ", "Comparison" =  "T3 v T4 ", "TestStatistic" = rate.l3.kw[["statistic"]][["Kruskal-Wallis chi-squared"]], "p.value" = rate.l3.kw[["p.value"]])) %>% 
+        
+mutate_if(is.numeric, round, digits = 3) %>%     
+mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
+mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
+mutate_if(is.character, str_replace_all, pattern = "vs", replacement = "–") %>% 
+flextable() %>%
+set_header_labels(Data.set = "Data") %>% 
+flextable::compose(part = "header", j = "TestStatistic", value = as_paragraph("Test Statistic")) %>%
+flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+autofit() %>%
+font(fontname = "Times New Roman", part = "all") %>%
+fontsize(size = 12, part = "all") %>%
+bold(part = "header") %>% 
+colformat_num(j = "TestStatistic", digits = 2) %>%
+colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
+align(align = "center", j = "p.value") %>% 
+align(align = "center", j = "TestStatistic")
+
+
+lossKwDoc = read_docx()
+lossKwDoc = body_add_flextable(lossKwDoc, value = lossKwTab)
+print(lossKwDoc, target = "../tables/lossKwTab.docx")
+lossKwTab
 ```
 
 # Correlation analyses
@@ -697,11 +729,7 @@ print(spearLossDoc, target = "../tables/spearLossTab.docx")
 ***
 Now using same types plots as before, but for loss data. I am excluding the first time point, and will subset accordingly. And use the same code as above. 
 
-```{r, loss.subset, include = TRUE, results = "hide"}
-#subset
-corr.loss <- subset(corr, date != "8.24.18")
 
-```
 
 ```{r, loss.plots, echo = FALSE, results = "hide"}
 
@@ -709,144 +737,38 @@ corr.loss <- subset(corr, date != "8.24.18")
 scale <- function(x) sprintf("%.0f", x)
 
 # boxplots comparing shape areas to template
-rate.l1.box.1 <- ggplot(data = corr.loss, aes(x = date, y = loss))+
-  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
-  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
-  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
-  scale_x_discrete(labels = c(expression('T'[2]), expression('T'[3]), expression('T'[4])))+
-  labs(x = "Time", y = bquote('Tissue Loss'~(cm^2/wk)), fill = 'Site') +
+loss.box.1 <- ggplot(data = corr.loss, aes(x = date, y = loss))+
+  geom_boxplot(aes(fill = date), alpha = 1, outlier.shape = NA, color = "black") +
+  geom_point(aes(fill = date), color = "black", size = 3, position = position_jitterdodge()) +
+  scale_fill_manual(values = c("#A4A4BF", "#888C46", "#A3586D")) +
+  scale_x_discrete(labels = c(expression('T'[1]-'T'[2]), expression('T'[2]-'T'[3]), expression('T'[3]-'T'[4])))+
+  labs(x = "Time Point ", y = bquote('Tissue Loss'~(cm^2/wk)), fill = 'Site') +
   scale_y_continuous(labels = scale)+
   theme(legend.title = element_blank(),
         legend.text = element_text(color = "black", size = 25),
-        legend.background = element_blank())+
-  facet_grid(.~site,scales="free")
-rate.l1.box.1
+        legend.background = element_blank())
+  #facet_grid(.~site,scales="free")
+loss.box.1
 
-rate.l1.box <- rate.l1.box.1 + theme(
+loss.box <- loss.box.1 + theme(
   panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
   panel.background = element_rect(fill = '#F5F5F5'),
   plot.title = element_text(hjust = 0.5), 
   axis.line = element_line(colour = "black"), 
   axis.ticks = element_line(color="black"), 
   text = element_text(size=15, color="black"), 
-  axis.text.x=element_text(size=12, color="black"), 
-  axis.text.y=element_text(size=12, color="black"),
-  axis.title.y = element_text(size = 16, color = 'black'),
-  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+ 
-  rremove("legend")
+  axis.text.x=element_text(size=20, color="black"), 
+  axis.text.y=element_text(size=20, color="black"),
+  axis.title.y = element_text(size =25, color = 'black'),
+  axis.title.x = element_text(size = 25, color = 'black'), 
+  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+
+  rremove('legend')
 
-rate.l1.box
+loss.box
   
 
 
-#------------cor plot for L1 and T2------------------------
-# correlation plots comparing area lost to total colony size
-
-# makes a scatterplot of correlation
-l1.total.colony.size.1 <-ggplot(corr.t2, aes(x = total.colony.size, y = loss, color = site))+
-  geom_point(size = 5)+
-  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
-  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T2'~(cm^2/wk))) +
-  scale_y_continuous(labels = scale)
-l1.total.colony.size.1
-
-
-l1.total.colony.size <- l1.total.colony.size.1 + 
-  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
-        plot.title = element_text(hjust = 0.5), 
-        axis.line = element_line(colour = "black"), 
-        axis.ticks = element_line(color="black"), 
-        text = element_text(size=15, color="black"), 
-        axis.text.x=element_text(size=12, color="black"), 
-        axis.text.y=element_text(size=12, color="black"),
-        axis.title.y = element_text(size = 16, color = 'black'),
-        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))+
-  rremove("legend")
-l1.total.colony.size
-  
-
-
-#------------corr plot for l2 and t3---------------------------
-# correlation plots comparing number of disease lesions to overall disease area
-
-# makes a scatterplot of correlation
-l2.total.colony.size.1 <-ggplot(corr.t3, aes(x = total.colony.size, y = loss, color = site))+
-  geom_point(size = 5)+
-  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
-  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T3'~(cm^2/wk))) +
-  scale_y_continuous(labels = scale)
-l2.total.colony.size.1
-
-
-l2.total.colony.size <- l2.total.colony.size.1 + 
-  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
-        plot.title = element_text(hjust = 0.5), 
-        axis.line = element_line(colour = "black"), 
-        axis.ticks = element_line(color="black"), 
-        text = element_text(size=15, color="black"), 
-        axis.text.x=element_text(size=12, color="black"), 
-        axis.text.y=element_text(size=12, color="black"),
-        axis.title.y = element_text(size = 16, color = 'black'),
-        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))+
-  rremove("legend")
-l2.total.colony.size
-  
-#------------box plot for l3 and t4--------------------------
-rate.l3.box.1 <- ggplot(data = corr.t4, aes(x = date, y = loss))+
-  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
-  geom_point(aes(fill = site), color = "black", size = 3, position = position_jitterdodge()) +
-  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
-  scale_x_discrete(labels = c(expression('T'[2]), expression('T'[3])))+
-  labs(x = "Time", y = bquote('Tissue Loss'~(cm^2/wk)), fill = 'Site') +
-  scale_y_continuous(labels = scale)+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(color = "black", size = 25),
-        legend.background = element_blank())+
-  facet_grid(.~site,scales="free")
-rate.l3.box.1
-
-rate.l3.box <- rate.l3.box.1 + theme(
-  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
-  panel.background = element_rect(fill = '#F5F5F5'),
-  plot.title = element_text(hjust = 0.5), 
-  axis.line = element_line(colour = "black"), 
-  axis.ticks = element_line(color="black"), 
-  text = element_text(size=15, color="black"), 
-  axis.text.x=element_text(size=12, color="black"), 
-  axis.text.y=element_text(size=12, color="black"),
-  axis.title.y = element_text(size = 16, color = 'black'),
-  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+ 
-  rremove("legend")
-
-rate.l3.box
-
-#------------corr plot for l3 and t4--------------------------
-l3.total.colony.size.1 <-ggplot(corr.t4, aes(x = total.colony.size, y = loss, color = site))+
-  geom_point(size = 5)+
-  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
-  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue Loss at T4'~(cm^2/wk))) +
-  scale_y_continuous(labels = scale)
-l2.total.colony.size.1
-
-
-l3.total.colony.size <- l3.total.colony.size.1 + 
-  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
-        plot.title = element_text(hjust = 0.5), 
-        axis.line = element_line(colour = "black"), 
-        axis.ticks = element_line(color="black"), 
-        text = element_text(size=15, color="black"), 
-        axis.text.x=element_text(size=12, color="black"), 
-        axis.text.y=element_text(size=12, color="black"),
-        axis.title.y = element_text(size = 16, color = 'black'),
-        plot.margin = unit(c(0.5, 1, 0.5, 2.5), "cm"))
-l3.total.colony.size
-
-#------------Loss Plots--------------------------
-
-loss.plots.patch <-(rate.l1.box + l1.total.colony.size) / (l2.total.colony.size + l3.total.colony.size) + plot_layout(guides = 'collect')+plot_annotation(tag_levels = 'a')
-loss.plots.patch
-
-ggsave("../figures/loss.plots.png", plot= loss.plots.patch, width=15, height=10, units="in", dpi=600)
+ggsave("../figures/loss.plot.png", plot= loss.box, width=15, height=10, units="in", dpi=600)
 
 ```
 ![Patchwork Plots](../figures/loss.plots.png){width=100%}
