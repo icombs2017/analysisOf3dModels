@@ -450,7 +450,7 @@ disease.area.box
 
 ```{r, patch.box, include = TRUE}
 box.plots.patch <- (total.colony.box | healthy.colony.box | disease.area.box) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a')
-ggsave("../figures/box.plots.png", plot = box.plots.patch, width = 30, height = 10, units = "in", dpi = 600)
+ggsave("../figures/fig4.png", plot = box.plots.patch, width = 30, height = 10, units = "in", dpi = 600)
 ```
 
 
@@ -558,38 +558,10 @@ fried.loss <- friedmanTest(y=corr.loss$loss, groups = corr.loss$date, blocks = c
 fried.loss 
 
 
+loss.vs.total.colony.size <- cor.test(corr.loss$loss,corr.loss$total.colony.size, method="spearman", use="complete.obs")
+loss.vs.total.colony.size
 ```
-```{r, lossFriedTab, include = TRUE}
-lossFriedTab = data.frame("Data" = "Rate of Tissue Loss", "Test" = "Friedman's Test", "Comparison" = "T1 v T2", "TestStatistic" = rate.l1.kw[["statistic"]][["Kruskal-Wallis chi-squared"]], "p.value" = rate.l1.kw[["p.value"]]) %>% 
-  add_row(data.frame("Data" = " ", "Test" =  " ", "Comparison" =  "T2 v T3 ", "TestStatistic" = rate.l2.kw[["statistic"]][["Kruskal-Wallis chi-squared"]], "p.value" = rate.l2.kw[["p.value"]])) %>% 
-add_row(data.frame("Data" = " ", "Test" =  " ", "Comparison" =  "T3 v T4 ", "TestStatistic" = rate.l3.kw[["statistic"]][["Kruskal-Wallis chi-squared"]], "p.value" = rate.l3.kw[["p.value"]])) %>% 
-        
-mutate_if(is.numeric, round, digits = 3) %>%     
-mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
-mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
-mutate_if(is.character, str_replace_all, pattern = "vs", replacement = "–") %>% 
-flextable() %>%
-set_header_labels(Data.set = "Data") %>% 
-flextable::compose(part = "header", j = "TestStatistic", value = as_paragraph("Test Statistic")) %>%
-flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
-autofit() %>%
-font(fontname = "Times New Roman", part = "all") %>%
-fontsize(size = 12, part = "all") %>%
-bold(part = "header") %>% 
-colformat_num(j = "TestStatistic", digits = 2) %>%
-colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
-align(align = "center", j = "p.value") %>% 
-align(align = "center", j = "TestStatistic")
-lossKwDoc = read_docx()
-lossKwDoc = body_add_flextable(lossKwDoc, value = lossKwTab)
-print(lossKwDoc, target = "../tables/lossKwTab.docx")
-lossKwTab
 
-
-
-
-
-```
 
 
 
@@ -713,10 +685,36 @@ loss.box <- loss.box.1 + theme(
   rremove('legend')
 loss.box
   
-ggsave("../figures/loss.plot.png", plot= loss.box, width=15, height=10, units="in", dpi=600)
+#Correlation plot for colony size and rate of tissue loss
+
+colony.size.loss.1 <-ggplot(corr.loss, aes(x = total.colony.size, y = loss, color = site))+
+  geom_point(size = 5)+
+  scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
+  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Disease Lesion Area'~(cm^2)), color = "Site") +
+  scale_y_continuous(labels = scale)
+colony.size.loss.1
+colony.size.loss <- colony.size.loss.1 + 
+  theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 
+        panel.background = element_rect(fill = '#F5F5F5'),
+        plot.title = element_text(hjust = 0.5), 
+        axis.line = element_line(colour = "black"), 
+        axis.ticks = element_line(color="black"), 
+        text = element_text(size=20, color="black"), 
+        axis.text.x=element_text(size=14, color="black"), 
+        axis.text.y=element_text(size=14, color="black"),
+        axis.title.y = element_text(size = 18, color = 'black'))
+
+colony.size.loss 
+
+loss.panel <- loss.box + colony.size.loss + guide_area()+ plot_layout(nrow = 1, guides = 'collect', widths = c(5,5,1)) + plot_annotation(tag_levels = 'a')
+
+ggsave("../figures/loss.panel.png", plot= loss.panel, width=15, height=10, units="in", dpi=600)
+
+
+correlation.plots.patch <- (colony.size.disease.area + lesion.count.colony.size + lesion.count.disease.area) / guide_area() + plot_layout(nrow = 2, guides = 'collect', heights = c(5,1)) + plot_annotation(tag_levels = 'a')
+ggsave("../figures/correlation.plots.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
+
 ```
-
-
 
 
 
