@@ -145,7 +145,27 @@ You can see that we added a **Prevalence** column to the data set!
 Now our report needs some analyses. Here we want to see if our prevalence data varies between counties and through time. We will be using a PERMANOVA in R to assess this. We will use the ```adonis()``` function in *vegan*.
 
 ```{r, permanova, include = TRUE}
+prev.dist <- vegdist(countyData$Prevalence, method="euclidean", na.rm= TRUE)
+# replaces missing data (NAs) with 0
+prev.dist[is.na(prev.dist)] <- 0
 
+# testing for homogeneity of variance among locations
+prev.disp <- betadisper(prev.dist, group=countyData$County)
+permutest(prev.disp, bias.adjust = TRUE, perm = 9999)
+# significant test value indicates heterogeneous variance
+
+# post hoc tests
+prev.disp.HSD <- TukeyHSD(prev.disp)
+prev.disp.HSD
+# indicates unequal variance in site Martin
+
+# plots showing higher variance in Martin versus other locations
+boxplot(prev.disp)
+# These results suggest unequal variance among locations, with highest variance attributed to Martin
+# Since Martin is also the smallest group, this can result in liberal PERMANOVA results (per Anderson and Walsh 2013)
+# However, given the results of the PERMANOVA below, the interpretation remains that only models differ within locations
+
+# running the PERMANOVA
 set.seed(999)
 prev.perm <- adonis(formula = Prevalence ~ County*MonthYear, data = countyData, method = "euclidian", permutations = 9999, na.rm = TRUE)
 prev.perm
@@ -195,7 +215,7 @@ align(align = "center", j = "p.value")
 
 prevPermanovaDoc = read_docx()
 prevPermanovaDoc = body_add_flextable(prevPermanovaDoc, value = prevPermTab)
-print(prevPermanovaDoc, target = "../tables/prevalencePermanovaTable.docx")
+print(prevPermanovaDoc, target = "../tables/Table1.docx")
 prevPermTab
 
 
@@ -212,7 +232,7 @@ prevPermTab
 ***
 Plotting disease prevalence at each County over time. But first we need to subset by **County**. Just a note, *SEFL01* and *SEFL02* are actually *SLR Central* and *SLR South*, respectively. For plotting purposes I am renaming them. I am also arranging the factor levels chronologically. 
 
-```{r, Plot, include = TRUE, ft.align = "left"}
+```{r, Plot, include = TRUE, ft.align = "left", eval = FALSE}
 countyPlot <- countyData %>% 
   dplyr::select(c(County, MonthYear, Prevalence)) %>% 
   group_by(MonthYear,County) %>% 
@@ -249,5 +269,8 @@ county.prev
 
 
 
-ggsave("../figures/countyPrev.png", plot = county.prev,height = 9, width = 9, units = 'in', dpi = 600)
+ggsave("../figures/Fig3.png", plot = county.prev, height = 9, width = 9, units = 'in',dpi = 600)
 ```
+
+
+<img src="../figures/Fig3.png" width="425"/> 

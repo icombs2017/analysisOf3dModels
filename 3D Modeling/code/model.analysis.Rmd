@@ -249,7 +249,7 @@ align(align = "center", j = "p.value")
 
 friedDoc = read_docx()
 friedDoc = body_add_flextable(friedDoc, value = friedTab)
-print(friedDoc, target = "../tables/friedTable.docx")
+print(friedDoc, target = "../tables/Table1.docx")
 friedTab
 ```
 
@@ -303,7 +303,7 @@ align(align = "center", j = "rho")
 
 spearSizeDoc = read_docx()
 spearSizeDoc = body_add_flextable(spearSizeDoc, value = spearSizeTab)
-print(spearSizeDoc, target = "../tables/spearSizeTab.docx")
+print(spearSizeDoc, target = "../tables/SpearSize.docx")
 
 ```
 <br><br>
@@ -343,7 +343,7 @@ align(align = "center", j = "TestStatistic")
 
 lesionKwDoc = read_docx()
 lesionKwDoc = body_add_flextable(spearSizeDoc, value = lesionKwTab)
-print(lesionKwDoc, target = "../tables/lesionKwTab.docx")
+print(lesionKwDoc, target = "../tables/TableS1.docx")
 
 lesionKwTab
 
@@ -450,7 +450,7 @@ disease.area.box
 
 ```{r, patch.box, include = TRUE}
 box.plots.patch <- (total.colony.box | healthy.colony.box | disease.area.box) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a')
-ggsave("../figures/fig4.png", plot = box.plots.patch, width = 30, height = 10, units = "in", dpi = 600)
+ggsave("../figures/Fig4.png", plot = box.plots.patch, width = 30, height = 10, units = "in", dpi = 600)
 ```
 
 
@@ -530,7 +530,7 @@ colony.size.disease.area
 
 ```{r, patch.correlation, include = TRUE}
 correlation.plots.patch <- (colony.size.disease.area + lesion.count.colony.size + lesion.count.disease.area) / guide_area() + plot_layout(nrow = 2, guides = 'collect', heights = c(5,1)) + plot_annotation(tag_levels = 'a')
-ggsave("../figures/correlation.plots.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
+ggsave("../figures/S3.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
 ```
 
 
@@ -596,7 +596,7 @@ align(align = "center", j = "p.value") %>%
 align(align = "center", j = "TestStatistic")
 lossKwDoc = read_docx()
 lossKwDoc = body_add_flextable(lossKwDoc, value = lossKwTab)
-print(lossKwDoc, target = "../tables/lossKwTab.docx")
+print(lossKwDoc, target = "../tables/TableS2.docx")
 lossKwTab
 ```
 
@@ -641,7 +641,7 @@ align(align = "center", j = "p.value")
 
 spearLossDoc = read_docx()
 spearLossDoc = body_add_flextable(spearLossDoc, value = spearLossTab)
-print(spearLossDoc, target = "../tables/spearLossTab.docx")
+print(spearLossDoc, target = "../tables/TableS3.docx")
 ```
 
 
@@ -680,8 +680,7 @@ loss.box <- loss.box.1 + theme(
   axis.text.x=element_text(size=20, color="black"), 
   axis.text.y=element_text(size=20, color="black"),
   axis.title.y = element_text(size =25, color = 'black'),
-  axis.title.x = element_text(size = 25, color = 'black'), 
-  plot.margin = unit(c(0.5, 1, 0.5, 2), "cm"))+
+  axis.title.x = element_text(size = 25, color = 'black'))+
   rremove('legend')
 loss.box
   
@@ -690,7 +689,7 @@ loss.box
 colony.size.loss.1 <-ggplot(corr.loss, aes(x = total.colony.size, y = loss, color = site))+
   geom_point(size = 5)+
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
-  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Disease Lesion Area'~(cm^2)), color = "Site") +
+  labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue  Loss'~(cm^2/wk)), color = "Site") +
   scale_y_continuous(labels = scale)
 colony.size.loss.1
 colony.size.loss <- colony.size.loss.1 + 
@@ -699,20 +698,17 @@ colony.size.loss <- colony.size.loss.1 +
         plot.title = element_text(hjust = 0.5), 
         axis.line = element_line(colour = "black"), 
         axis.ticks = element_line(color="black"), 
-        text = element_text(size=20, color="black"), 
-        axis.text.x=element_text(size=14, color="black"), 
-        axis.text.y=element_text(size=14, color="black"),
-        axis.title.y = element_text(size = 18, color = 'black'))
+        text = element_text(size=15, color="black"), 
+  axis.text.x=element_text(size=20, color="black"), 
+  axis.text.y=element_text(size=20, color="black"),
+  axis.title.y = element_text(size =25, color = 'black'),
+  axis.title.x = element_text(size = 25, color = 'black'))
 
 colony.size.loss 
 
 loss.panel <- loss.box + colony.size.loss + guide_area()+ plot_layout(nrow = 1, guides = 'collect', widths = c(5,5,1)) + plot_annotation(tag_levels = 'a')
 
-ggsave("../figures/loss.panel.png", plot= loss.panel, width=15, height=10, units="in", dpi=600)
-
-
-correlation.plots.patch <- (colony.size.disease.area + lesion.count.colony.size + lesion.count.disease.area) / guide_area() + plot_layout(nrow = 2, guides = 'collect', heights = c(5,1)) + plot_annotation(tag_levels = 'a')
-ggsave("../figures/correlation.plots.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
+ggsave("../figures/FigS2.png", plot= loss.panel, width=15, height=10, units="in", dpi=600)
 
 ```
 
