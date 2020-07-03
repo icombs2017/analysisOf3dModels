@@ -249,7 +249,7 @@ align(align = "center", j = "p.value")
 
 friedDoc = read_docx()
 friedDoc = body_add_flextable(friedDoc, value = friedTab)
-print(friedDoc, target = "../tables/Table1.docx")
+print(friedDoc, target = "../tables/Table2.docx")
 friedTab
 ```
 
@@ -530,7 +530,7 @@ colony.size.disease.area
 
 ```{r, patch.correlation, include = TRUE}
 correlation.plots.patch <- (colony.size.disease.area + lesion.count.colony.size + lesion.count.disease.area) / guide_area() + plot_layout(nrow = 2, guides = 'collect', heights = c(5,1)) + plot_annotation(tag_levels = 'a')
-ggsave("../figures/S3.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
+ggsave("../figures/FigS3.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
 ```
 
 

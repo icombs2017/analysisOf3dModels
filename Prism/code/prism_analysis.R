@@ -655,3 +655,23 @@ ggsave("corr_area_error.pdf", plot= plot3, width=12, height=4, units="in", dpi=3
 multiplot=grid.arrange(square.box, rectangle.box, circle.box, square.diff.box, rectangle.diff.box, circle.diff.box, corr.square, corr.rectangle, corr.circle, legend, ncol=3, nrow=4, layout_matrix=rbind(c(1,2,3),c(4,5,6),c(7,8,9),c(10,10,10)), widths=c(3.1,3,3), heights=c(3,3,3,0.25))
 
 ggsave("prism_area_error_panel.pdf", plot= multiplot, width=12, height=12, units="in", dpi=300)
+
+#-----------------------------------
+
+########## Testing for differences in model accuracy based on different frame rates
+
+## A subset of model were extracted across their time points at 3 different framerates: 3, 4 and 5 fps
+
+
+frame <- read.csv("../data/frameratetest.csv", header = TRUE)
+
+frame
+
+# Kruskal-Wallis on frame rate
+
+frame.kw <- kruskal.test(total ~ frame.rate, data = frame)
+frame.kw
+
+# no differences in model area based on framerate!
+
+
