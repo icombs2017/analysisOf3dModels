@@ -43,7 +43,6 @@ This is the analysis pipeline to analyze data generated from 3D models of fate t
 For the following analyses we will require the use of a number of different R packages. Most of which can be sourced from CRAN, but some must be downloaded from GitHub. We can use the following code to load in the packages and install any packages not previously installed in the R console. 
 
 ```{r,packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
-setwd("../data")
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load("ggplot2", "FSA", "officer", "gridExtra", "ggpubr", "Rmisc", "rcompanion", "RColorBrewer", "vegan", "nparcomp", "RVAideMemoire", "pairwiseAdonis", "PMCMR", "PMCMRplus", "patchwork", "magrittr","reshape2", "stringr", "dplyr", "flextable")
 pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
@@ -56,7 +55,7 @@ pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 Loading the dataset into R, and subsetting as needed, we will be making multiple subsets, subsetting by time point and by site to make things easier to workwith. 
 
 ```{r, load and subset, include = TRUE, results = "hide"}
-corr <- read.csv("../data/total.correlation.csv", header = T)
+corr <- read.csv("../data/fateTrackingSurfaceArea.csv", header = T)
 str(corr)
 head(corr)
 
@@ -342,7 +341,7 @@ align(align = "center", j = "TestStatistic")
 
 
 lesionKwDoc = read_docx()
-lesionKwDoc = body_add_flextable(spearSizeDoc, value = lesionKwTab)
+lesionKwDoc = body_add_flextable(lesionKwDoc, value = lesionKwTab)
 print(lesionKwDoc, target = "../tables/TableS1.docx")
 
 lesionKwTab
