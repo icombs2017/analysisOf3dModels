@@ -373,7 +373,7 @@ total.colony.box.1 <-
         legend.background = element_blank(),
         legend.position = "bottom")+
   facet_grid(.~site,scales="free")
-total.colony.box.1
+
 total.colony.box <- total.colony.box.1 + theme(
   panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
   panel.background = element_rect(fill = '#F5F5F5'),
@@ -388,7 +388,7 @@ total.colony.box <- total.colony.box.1 + theme(
 total.colony.box
 ```
 We repeat this using healthy tissue area, disease lesion area and lesion count. 
-```{r, rest.of.boxplots, results = "hide", echo = FALSE}
+```{r, rest.of.boxplots, results = "hide"}
 # This forces y axis labels to have 1 decimal place.
 scale <- function(x) sprintf("%.0f", x)
 # Plotting a boxplot of mean healthy tissue area for each site at each timepoint. 
@@ -405,8 +405,6 @@ healthy.colony.box.1 <-
         legend.background = element_blank(),
         legend.position = "bottom")+
   facet_grid(.~site,scales="free")
-
-healthy.colony.box.1
 
 healthy.colony.box <- healthy.colony.box.1 + theme(
   panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
@@ -435,8 +433,6 @@ disease.area.box.1 <-
         legend.position = "bottom")+
   facet_grid(.~site,scales="free")
 
-disease.area.box.1
-
 disease.area.box <- disease.area.box.1 + theme(
   panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
   panel.background = element_rect(fill = '#F5F5F5'),
@@ -456,7 +452,9 @@ box.plots.patch <- (total.colony.box | healthy.colony.box | disease.area.box) + 
   theme(plot.tag = element_text(size = 28))
 ggsave("../figures/Fig4.png", plot = box.plots.patch, width = 15, height = 5, units = "in", dpi = 600)
 ```
-
+```{r, patch.box.plot, echo = FALSE, fig.width = 15, fig.height = 5}
+box.plots.patch
+```
 <br><br>
 
 # Correlation Plots
@@ -478,10 +476,9 @@ lesion.count.colony.size <- lesion.count.colony.size.1 +
         text = element_text(size=20, color="black"), 
         axis.text.x=element_text(size=14, color="black"), 
         axis.text.y=element_text(size=14, color="black"),
-        axis.title.y = element_text(size = 18, color = 'black'))+
-        #plot.margin = unit(c(0.5, 1, 0.5, 1.75), "cm"))+
-  rremove("legend")
-lesion.count.colony.size 
+        axis.title.y = element_text(size = 18, color = 'black'),
+        legend.position = "none")
+ 
 # Significant Correlation
 lesion.count.disease.area.1 <-ggplot(corr, aes(x = disease.area, y = lesion.count, color = site))+
   geom_point(size = 5)+
@@ -489,7 +486,7 @@ lesion.count.disease.area.1 <-ggplot(corr, aes(x = disease.area, y = lesion.coun
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
   labs(x = bquote('Disease Lesion Area'~(cm^2)), y = "Lesion Count") +
   scale_y_continuous(labels = scale)
-lesion.count.disease.area.1
+
 lesion.count.disease.area <- lesion.count.disease.area.1 + 
   theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 panel.background = element_rect(fill = '#F5F5F5'),
         plot.title = element_text(hjust = 0.5), 
@@ -504,13 +501,13 @@ lesion.count.disease.area <- lesion.count.disease.area.1 +
 lesion.count.disease.area 
 ```
 
-```{r, correlation.rest, echo = FALSE, results = "hide"}
+```{r, correlation.rest, results = "hide"}
 colony.size.disease.area.1 <-ggplot(corr, aes(x = total.colony.size, y = disease.area, color = site))+
   geom_point(size = 5)+
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
   labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Disease Lesion Area'~(cm^2)), color = "Site") +
   scale_y_continuous(labels = scale)
-colony.size.disease.area.1
+
 colony.size.disease.area <- colony.size.disease.area.1 + 
   theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 
         panel.background = element_rect(fill = '#F5F5F5'),
@@ -521,8 +518,7 @@ colony.size.disease.area <- colony.size.disease.area.1 +
         axis.text.x=element_text(size=14, color="black"), 
         axis.text.y=element_text(size=14, color="black"),
         axis.title.y = element_text(size = 18, color = 'black'),
-        legend.position = "bottom")
-        #plot.margin = unit(c(0.5, 1, 0.5, 1.5), "cm"))
+        legend.position = "none")
 colony.size.disease.area 
   
 ```
@@ -533,12 +529,13 @@ colony.size.disease.area
 correlation.plots.patch <- (colony.size.disease.area + lesion.count.colony.size + lesion.count.disease.area) / guide_area() + plot_layout(nrow = 2, guides = 'collect', heights = c(5,1)) + plot_annotation(tag_levels = 'a')
 ggsave("../figures/FigS3.png", plot = correlation.plots.patch, width = 20, height = 10, units = "in", dpi = 600)
 ```
-
-
+```{r, corr.plots, echo = FALSE, fig.width = 20, fig.height = 10}
+correlation.plots.patch
+```
 
 <br><br>
-***
 
+***
 
 # Rates of Loss
 ***
@@ -602,13 +599,12 @@ lossKwTab
 ```
 
 
-
-
 <br><br>
+
 # Correlation analyses
+
 ***
 Correlation analyses were run on rates of loss and various colony metrics. 
-
 ```{r, loss.corr, include = TRUE, warning = FALSE}
 
 ## Rate of loss 1 and total colony size at T2
@@ -646,16 +642,11 @@ print(spearLossDoc, target = "../tables/TableS3.docx")
 ```
 
 
-
-
-
 # Visualizing rates of loss
 ***
 Now using same types plots as before, but for loss data. I am excluding the first time point, and will subset accordingly. And use the same code as above. 
 
-
-
-```{r, loss.plots, echo = FALSE, results = "hide"}
+```{r, loss.plots, results = "hide"}
 #------------box plot for L1---------------------------
 scale <- function(x) sprintf("%.0f", x)
 # boxplots comparing shape areas to template
@@ -692,7 +683,7 @@ colony.size.loss.1 <-ggplot(corr.loss, aes(x = total.colony.size, y = loss, colo
   scale_color_manual(values = c("#7BA46C", "#EACF9E", "#008D91"))+
   labs(x = bquote('Total Colony Size'~(cm^2)), y = bquote('Tissue  Loss'~(cm^2/wk)), color = "Site") +
   scale_y_continuous(labels = scale)
-colony.size.loss.1
+
 colony.size.loss <- colony.size.loss.1 + 
   theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),                 
         panel.background = element_rect(fill = '#F5F5F5'),
@@ -712,6 +703,7 @@ loss.panel <- loss.box + colony.size.loss + guide_area()+ plot_layout(nrow = 1, 
 ggsave("../figures/FigS2.png", plot= loss.panel, width=15, height=10, units="in", dpi=600)
 
 ```
-
-
+```{r, loss.fig, fig.width = 15, fig.height = 10, echo = FALSE}
+loss.panel
+```
 
