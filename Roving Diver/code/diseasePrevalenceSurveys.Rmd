@@ -105,7 +105,7 @@ head(rd)
 ```
 
 
-# Subsetting by Date
+# Subsetting by Site
 ***
 For the purposes of reporting, you might want to block certain dates out, and only report on certain dates. Here, as an example, we are subsetting everything before July 3, 2019. This code can be modified to capture any time period you may need. We are calling it `rd.early` because it encapsulates the early days of our surveys. I am also subsetting for only our longterm monitoring sites. 
 
