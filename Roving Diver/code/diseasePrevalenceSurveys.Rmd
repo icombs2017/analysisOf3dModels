@@ -269,7 +269,7 @@ county.prev
 
 
 
-ggsave("../figures/Fig3.png", plot = county.prev, height = 9, width = 9, units = 'in',dpi = 600)
+ggsave("../figures/Fig3.png", plot = county.prev, height = 5, width = 9, units = 'in',dpi = 600)
 ```
 
 
