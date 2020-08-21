@@ -4,7 +4,7 @@
 
 
 ### Ian Combs -- <icombs2017@fau.edu>
-### version: May 21, 2020
+### version: Aug 21, 2020
 
 ------------------------------------------------------------------------
 This repository contains protocols, scripts, and data associated with the 3D model generation and analysis of fate-tracked *Montastraea cavernosa* colonies within Broward County, FL.
