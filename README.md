@@ -10,21 +10,8 @@
 This repository contains protocols, scripts, and data associated with the 3D model generation and analysis of fate-tracked *Montastraea cavernosa* colonies within Broward County, FL.
 
 ------------------------------------------------------------------------
-### Analysis and walkthroughs accompanying this repository:
-[3D Model Analysis](https://icombs2017.github.io/analysisOf3dModels/3D%20Modeling/code/)
-
-------------------------------------------------------------------------
-
-### Repository contents: 
-
-- figures/
-
-- stats/ 
-  - *model.analysis.Rmd* -- Analysis of 3D models
-
-analysis Rmarkdown document
-  - *index.html* -- Roving Diver Disease statistical analysis webpage
-  - *fateTracking.Rproj* -- R project file
-  - *gitignore* -- .gitignore
-  - *README.md* -- Repository readme document
+### Sections of this Repository:
+[3D Modeling](https://icombs2017.github.io/analysisOf3dModels/3D%20Modeling)
+[3D Model Validation and Accuracy Assessment](https://icombs2017.github.io/analysisOf3dModels/Prism)
+[Disease Prevalence Surveys](https://icombs2017.github.io/analysisOf3dModels/Roving%20Diver)
 
