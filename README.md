@@ -11,7 +11,7 @@ This repository contains protocols, scripts, and data associated with the 3D mod
 
 ------------------------------------------------------------------------
 ### Sections of this Repository:
-[3D Modeling](https://icombs2017.github.io/analysisOf3dModels/3D%20Modeling)
-[3D Model Validation and Accuracy Assessment](https://icombs2017.github.io/analysisOf3dModels/Prism)
-[Disease Prevalence Surveys](https://icombs2017.github.io/analysisOf3dModels/Roving%20Diver)
+[3D Modeling](https://icombs2017.github.io/analysisOf3dModels/3D%20Modeling)<br>
+[3D Model Validation and Accuracy Assessment](https://icombs2017.github.io/analysisOf3dModels/Prism)<br>
+[Disease Prevalence Surveys](https://icombs2017.github.io/analysisOf3dModels/Roving%20Diver)<br>
 
