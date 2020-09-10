@@ -14,14 +14,14 @@ This repository contains scripts and data associated with long-term disease moni
 
 ------------------------------------------------------------------------
 
-### Repository contents: 
+### Repository contents:
 
 - code/
   - *diseasePrevalenceSurveys.Rmd* -- disease prevalence statistical analysis Rmarkdown document
   - *index.html* -- disease prevalence statistical analysis webpage
   - *diseasePrevalenceSurveys.Rproj* -- R project file
 
-- data/ 
+- data/
   - *RovingDiverSurveysManuscript.xlsx* -- disease prevalence data used in analysis
 
 - figures/
@@ -33,4 +33,3 @@ This repository contains scripts and data associated with long-term disease moni
 - *.gitignore* -- .gitignore file
 
 - *README.md* -- Repository readme document
-
