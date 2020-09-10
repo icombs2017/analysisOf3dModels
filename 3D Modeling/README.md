@@ -11,7 +11,7 @@ This repository contains protocols, scripts, and data associated with the 3D mod
 
 ------------------------------------------------------------------------
 ### Analysis and walkthroughs accompanying this repository:
-[3D Model Analysis](file:///Users/iancombs/Documents/GitHub/analysisOf3dModels/3D%20Modeling/code/model.analysis.html)
+[3D Model Analysis](https://icombs2017.github.io/3D%20Modeling/code/)
 
 ------------------------------------------------------------------------
 
