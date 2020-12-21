@@ -516,7 +516,7 @@ colony.size.disease.area <- colony.size.disease.area.1 +
         axis.text.x=element_text(size=14, color="black"), 
         axis.text.y=element_text(size=14, color="black"),
         axis.title.y = element_text(size = 18, color = 'black'),
-        legend.position = "none")
+       legend.position = "bottom")
 colony.size.disease.area 
   
 ```

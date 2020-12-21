@@ -118,6 +118,177 @@ tail(rd.site)
 Checking to see that we have our earliest date `head(rd.site)` and our cut-off date `tail(rd.site)` to confirm the subset worked.
 <br><br>
 
+# Tabulating Data
+***
+Currently the data set has very high resolution, to species level, which may not be necessary for certain reports. Now, using `dplyr` we will tabulate the data into a more concise form. In this example we are assuming that we need to report on data from the time frame we subsetted earlier (November 2017 - June 2019), and the report only needs to know prevalence data by County. Sometimes packages mask other packages so I am specifying that I want to use the function `select` from the package `dplyr` by using the following: `dplyr::select`.
+
+```{r, countyData, include = TRUE}
+countyData <- rd.site %>% dplyr::select(c(SiteCode, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>% group_by(SiteCode,MonthYear,County) %>% summarise_if(is.integer, sum)
+countyData
+
+
+siteData <- rd.site %>% dplyr::select(c(SiteCode, Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%  group_by(SiteCode, MonthYear, Location) %>% summarise_if(is.integer, sum)
+siteData
+```
+To summarize: I am selecting (`dplyr::select()`) from the data the columns of **SiteCode**, **County**, **MonthYear**, **SpeciesCode**, **TLD**, and **TotalObservations**. grouping them (`group_by()`) by  **SiteCode**, **MonthYear**, and **County**; and adding (`summarise_if(is.integer, sum)`) all integers found in that subset (in this case **TLD** and **TotalObservations**).
+
+<br><br>
+# Calculating Prevalence Data
+***
+We want to calculate SCTLD disease prevalence at our monitoring sites. To do this, we will calculate prevalence by diving our SCTLD observations (**SCTLD**) from our total number of observations (**TotalObservations**). The syntax used here is very similar to the way we calculated **TotalObservations**.
+
+```{r, prevalence, include = TRUE}
+countyData$Prevalence = countyData$SCTLD/countyData$TotalObservations
+head(countyData)
+siteData$Prevalence = siteData$SCTLD/siteData$TotalObservations
+head(siteData)
+```
+You can see that we added a **Prevalence** column to the data set!
+<br><br>
+
+# Running PERMANOVA in R
+***
+Now our report needs some analyses. Here we want to see if our prevalence data varies between counties and through time. We will be using a PERMANOVA in R to assess this. We will use the ```adonis()``` function in *vegan*.
+
+```{r, permanova, include = TRUE}
+prev.dist <- vegdist(countyData$Prevalence, method="euclidean", na.rm= TRUE)
+# replaces missing data (NAs) with 0
+prev.dist[is.na(prev.dist)] <- 0
+
+# testing for homogeneity of variance among locations
+prev.disp <- betadisper(prev.dist, group=countyData$County)
+permutest(prev.disp, bias.adjust = TRUE, perm = 9999)
+# significant test value indicates heterogeneous variance
+
+# post hoc tests
+prev.disp.HSD <- TukeyHSD(prev.disp)
+prev.disp.HSD
+# indicates unequal variance in site Martin
+
+# plots showing higher variance in Martin versus other locations
+boxplot(prev.disp)
+# These results suggest unequal variance among locations, with highest variance attributed to Martin
+# Since Martin is also the smallest group, this can result in liberal PERMANOVA results (per Anderson and Walsh 2013)
+# However, given the results of the PERMANOVA below, the interpretation remains that only models differ within locations
+
+# running the PERMANOVA
+set.seed(999)
+prev.perm <- adonis(formula = Prevalence ~ County*MonthYear, data = countyData, method = "euclidian", permutations = 9999, na.rm = TRUE)
+prev.perm
+```
+County is significantly different, but Time is not.
+
+<br><br>
+
+Now lets conduct a pairwise comparison to determine which county (or counties) is driving the variation. We will be using `pairwise.adonis()` from *pairwiseAdonis*.
+
+```{r, pairwisePERMANOVA, incldue = TRUE}
+set.seed(999)
+prev.pairwise <- pairwise.adonis(countyData[c(6)],factors=countyData$County,
+                             sim.method='euclidian',p.adjust.m='bonferroni', perm = 9999)
+prev.pairwise
+```
+We see that Palm Beach County is significantly different from both Martin County and Broward County. Now its time to visualize this data!
+
+<br><br>.
+
+
+Now we are tabulating the data into a publication ready table.
+```{r, prevalencePermTab, include = TRUE, ft.align = "left"}
+
+prevPermTab = data.frame("Test" = "PERMANOVA", "Comparison" = "County", "pseudo.F" = prev.perm$aov.tab$F.Model[1], "p.value" = prev.perm$aov.tab$`Pr(>F)`[1]) %>% 
+  add_row("Test" = " ", "Comparison" = "Date", "pseudo.F" = prev.perm$aov.tab$F.Model[2], "p.value" = prev.perm$aov.tab$`Pr(>F)`[2]) %>% 
+  add_row("Test" = " ", "Comparison" = "County:Date", "pseudo.F" = prev.perm$aov.tab$F.Model[3], "p.value" = prev.perm$aov.tab$`Pr(>F)`[3]) %>% 
+  add_row("Test" = c("Pairwise", replicate(nrow(prev.pairwise)-1,"")), "Comparison" = prev.pairwise$pairs, "pseudo.F" = prev.pairwise$F.Model, "p.value" = prev.pairwise$p.adjusted) %>%
+  
+mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
+mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
+mutate_if(is.character, str_replace_all, pattern = "vs", replacement = "–") %>%
+flextable() %>%
+set_header_labels(Data.set = "Data set") %>% 
+flextable::compose(part = "header", j = "pseudo.F", value = as_paragraph("Psuedo-", as_i("F"))) %>%
+flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
+autofit() %>%
+font(fontname = "Times New Roman", part = "all") %>%
+fontsize(size = 12, part = "all") %>%
+bold(part = "header") %>% 
+colformat_num(j = "pseudo.F", digits = 2) %>%
+colformat_num(j = "p.value", digits = 3, na_str = "ns") %>% 
+align(align = "center", j = "p.value") %>% 
+align(align = "center", j = "p.value")
+
+
+
+prevPermanovaDoc = read_docx()
+prevPermanovaDoc = body_add_flextable(prevPermanovaDoc, value = prevPermTab)
+print(prevPermanovaDoc, target = "../tables/Table1.docx")
+prevPermTab
+
+
+
+
+```
+
+
+
+
+<br><br>.
+
+# Data Visualization
+***
+Plotting disease prevalence at each County over time. But first we need to subset by **County**. Just a note, *SEFL01* and *SEFL02* are actually *SLR Central* and *SLR South*, respectively. For plotting purposes I am renaming them. I am also arranging the factor levels chronologically. 
+
+```{r, Plot, include = TRUE, ft.align = "left", eval = FALSE}
+countyPlot <- countyData %>% 
+  dplyr::select(c(County, MonthYear, Prevalence)) %>% 
+  group_by(MonthYear,County) %>% 
+  add_count() %>%  
+  summarise(avgPrevalence = mean(Prevalence), n = max(n), sd = sd(Prevalence), stderror = sd(Prevalence)/sqrt(n))
+
+
+
+county.prev1 <- ggplot(countyPlot, aes(MonthYear, avgPrevalence, group = County, color = County))+
+  geom_point()+
+  geom_line()+
+  geom_errorbar(aes(ymin = avgPrevalence - stderror, 
+                    ymax = avgPrevalence + stderror),
+                    width = 0.5)+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+  ylim(0,0.5)+
+  #facet_wrap(~County, scale = "free")+
+  labs(y = "Prevalence", x = "Month")
+
+county.prev1
+
+county.prev <- county.prev1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'), 
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=20, color="black"), 
+  axis.text.x=element_text(angle = 45, hjust = 1, size=14, color="black"), 
+  axis.text.y=element_text(size=12, color="black")
+)
+
+county.prev
+
+
+
+ggsave("../figures/Fig3.png", plot = county.prev, height = 5, width = 9, units = 'in',dpi = 600)
+```
+
+
+<img src="../figures/Fig3.png" width="425"/> 
+
+
+############################################################
+############################################################
+############################################################
+############################################################
+############################################################
+############################################################
+############################################################
 
 # Tabulating Data
 ***
@@ -187,7 +358,7 @@ prev.pairwise
 ```
 We see that Jupiter and West Palm are significantly different from both St. Lucie Reef and Lauderdale-by-the-Sea. Now its time to visualize this data!
 
-<br><br>
+<br><br>.
 
 
 Now we are tabulating the data into a publication ready table.
@@ -229,7 +400,7 @@ prevPermTab
 
 
 
-<br><br>
+<br><br>.
 
 # Data Visualization
 ***
@@ -288,7 +459,6 @@ ggsave("../figures/Fig3Revised.png", plot = county.prev, height = 5, width = 9, 
 
 
 ```
-<img src="../figures/Fig3Revised.png" width="425"/> 
 
 
 
