@@ -136,7 +136,7 @@ load("prism_stats.RData")
 
 ####shape error plots####
 
-prism$site=factor(prism$site, levels=unique(prism$site)) 
+prism$site=factor(prism$site, levels=unique(prism$site))
 
 # creates a function that forces y axis labels to have 1 decimal place
 scale <- function(x) sprintf("%.0f", x)
@@ -157,9 +157,9 @@ square.diff.box <-
   ) + labs(x = "Site",
            y = "Shape Error (cm2)",
            title = "Square",
-           fill = 'Site') + 
-  theme_bw() + 
-  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") + 
+           fill = 'Site') +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") +
   scale_y_continuous(labels = scale)
 square.diff.box
 
@@ -178,9 +178,9 @@ rectangle.diff.box <-
   ) + labs(x = "Site",
            y = element_blank(),
            title = "Rectangle",
-           fill = 'Site') + 
-  theme_bw() + 
-  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") + 
+           fill = 'Site') +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") +
    scale_y_continuous(labels = scale)
 rectangle.diff.box
 
@@ -199,176 +199,28 @@ circle.diff.box <-
   ) + labs(x = "Site",
            y = element_blank(),
            title = "Circle",
-           fill = 'Site') + 
-  theme_bw() + 
-  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") + 
+           fill = 'Site') +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5),  legend.position = "none") +
    scale_y_continuous(labels = scale)
 circle.diff.box
 
 plot=grid.arrange(square.diff.box, rectangle.diff.box, circle.diff.box, ncol=3, nrow=1, widths=c(3.1,3,3), heights=c(3))
 
 #saves plot as PDF
-<<<<<<< HEAD
 ggsave("prism_error_means.pdf", plot= plot, width=12, height=4, units="in", dpi=300)
-=======
-ggsave("prism_error_means.pdf", plot= plot2, width=12, height=4, units="in", dpi=300)
 
-#-------------------------------
-####shape error correlations####
 
-# testing correlation between size of model (total area) and error associated with shape measurements
-# i.e. if the model area is larger (higher filming altitude), are models worse quality?
-
-# tests correlation between model area and the difference between in-model shape measurements and the template measurements (error)
-cor.test(prism.sub$whole,prism.sub$square.diff, method="spearman", use="complete.obs")
-# Spearman's rank correlation rho
-# 
-# data:  prism.sub$whole and prism.sub$square.diff
-# S = 3958750, p-value = 0.1084
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#        rho 
-# 0.09333898 
-
-cor.test(prism.sub$whole,prism.sub$rectangle.diff, method="spearman", use="complete.obs")
-# Spearman's rank correlation rho
-# 
-# data:  prism.sub$whole and prism.sub$rectangle.diff
-# S = 3100600, p-value = 1.231e-05
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.2527713 
-
-cor.test(prism.sub$whole,prism.sub$circle.diff, method="spearman", use="complete.obs")
-# Spearman's rank correlation rho
-# 
-# data:  prism.sub$whole and prism.sub$circle.diff
-# S = 48656, p-value = 0.01591
-# alternative hypothesis: true rho is not equal to 0
-# sample estimates:
-#       rho 
-# 0.2794314 
-
-# significant correlation for rectangle and circle, so let's see if this is driven by particular sites
-
-#-----------------------------------
-####shape error correlation plots####
-
-# correlation plots comparing shape error to overall model area
-
-prism.sub$location=factor(prism.sub$location, levels=unique(prism.sub$location)) 
-
-# makes a scatterplot of correlation
-corr.square <-
-  ggscatter(
-    prism.sub,
-    x = "whole",
-    y = "square.diff",
-    color = "location",
-    add = "reg.line",
-    conf.int = TRUE,
-    palette = c("grey", "#3070cf", "#79d7fb"),
-    label.x.npc = "middle",
-    label.y.npc = "top",
-    xlab = "Model Area (m2)",
-    ylab = "Shape Error (cm2)"
-    #main = "Square"
-  ) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  stat_cor(method = "spearman", aes(label = paste(..r.label.., ..p.label.., sep = "~','~"), color=location))
-corr.square
-
-# takes the legend and saves it as a separate object (grob)
-get_legend<-function(corr.square){
-  tmp <- ggplot_gtable(ggplot_build(corr.square))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-}
-legend=get_legend(corr.square)
-
-# removes legend
-corr.square <- corr.square + theme_bw()
-corr.square <- corr.square + rremove("legend")
-
-corr.rectangle <-
-  ggscatter(
-    prism.sub,
-    x = "whole",
-    y = "rectangle.diff",
-    color = "location",
-    add = "reg.line",
-    conf.int = TRUE,
-    palette = c("grey", "#3070cf", "#79d7fb")
-    #main = "Rectangle"
-  ) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  stat_cor(method = "spearman", aes(label = paste(..r.label.., ..p.label.., sep = "~','~"), color=location)) + 
-  labs(x = "Model Area (m2)",
-       y = element_blank(),
-       #title = "Circle",
-       fill = 'Location') +
-  theme_bw() +
-  rremove("legend")
-corr.rectangle
-
-corr.circle <-
-  ggscatter(
-    prism.sub,
-    x = "whole",
-    y = "circle.diff",
-    color = "location",
-    add = "reg.line",
-    conf.int = TRUE,
-    palette = c("grey", "#3070cf", "#79d7fb"),
-    xlab = "Model Area (m2)",
-    ylab = FALSE
-    #main = "Circle"
-  ) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  stat_cor(method = "spearman", aes(label = paste(..r.label.., ..p.label.., sep = "~','~"), color=location)) + 
-  labs(x = "Model Area (m2)",
-       y = element_blank(),
-       #title = "Circle",
-       fill = 'Location') +
-  theme_bw() + 
-  rremove("legend")
-corr.circle
-
-plot3=grid.arrange(corr.square, corr.rectangle, corr.circle, legend, ncol=3, nrow=2, layout_matrix=rbind(c(1,2,3),c(4,4,4)), widths=c(3.1,3,3), heights=c(3,0.25))
-
-#saves plot as PDF (transparent CI won't export as EPS)
-ggsave("corr_area_error.pdf", plot= plot3, width=12, height=4, units="in", dpi=300)
-
-# so, there may be a sig increase in shape measurement error as model area increases, but depending on location (stlucie)
-
-#-----------------------------------
-####all figure multiplot####
-
-# multiplot of all generated figures
-
-multiplot=grid.arrange(square.box, rectangle.box, circle.box, square.diff.box, rectangle.diff.box, circle.diff.box, corr.square, corr.rectangle, corr.circle, legend, ncol=3, nrow=4, layout_matrix=rbind(c(1,2,3),c(4,5,6),c(7,8,9),c(10,10,10)), widths=c(3.1,3,3), heights=c(3,3,3,0.25))
-
-ggsave("prism_area_error_panel.pdf", plot= multiplot, width=12, height=12, units="in", dpi=300)
-
-#-----------------------------------
-
-########## Testing for differences in model accuracy based on different frame rates
-
-## A subset of model were extracted across their time points at 3 different framerates: 3, 4 and 5 fps
-
+####frame rate####
+# Testing for differences in model accuracy based on different frame rates
+# A subset of model were extracted across their time points at 3 different framerates: 3, 4 and 5 fps
 
 frame <- read.csv("../data/frameratetest.csv", header = TRUE)
 
 frame
 
-# Kruskal-Wallis on frame rate
-
+# Kruskal-Wallis test on frame rate
 frame.kw <- kruskal.test(total ~ frame.rate, data = frame)
 frame.kw
-
-# no differences in model area based on framerate!
-
-
->>>>>>> 2457e76834eba310a67146b6ef5ea37c0e14449c
+# no differences in model area based on framerate
+write.csv(frame.kw, file = "Kruskal_framerate_outputs.csv")
