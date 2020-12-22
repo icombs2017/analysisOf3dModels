@@ -14,15 +14,22 @@ This repository contains scripts and data associated with long-term disease moni
 
 ------------------------------------------------------------------------
 
-### Repository contents: 
+### Repository contents:
+
+- code/
+  - *diseasePrevalenceSurveys.Rmd* -- disease prevalence statistical analysis Rmarkdown document
+  - *index.html* -- disease prevalence statistical analysis webpage
+  - *diseasePrevalenceSurveys.Rproj* -- R project file
+
+- data/
+  - *RovingDiverSurveysManuscript.xlsx* -- disease prevalence data used in analysis
 
 - figures/
+  - *Fig3.png* -- plot of average disease prevalence at all there counties over time
 
-- stats/
+- tables/
+  - *Table1.docx* -- results of PERMANOVA and pairwise comparisons for disease prevalence over site and time
 
-analysis Rmarkdown document
-  - *index.html* -- Roving Diver Disease statistical analysis webpage
-  - *rovingDiverAnalysis.Rproj* -- R project file
-  - *gitignore* -- .gitignore
-  - *README.md* -- Repository readme document
+- *.gitignore* -- .gitignore file
 
+- *README.md* -- Repository readme document
