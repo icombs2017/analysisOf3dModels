@@ -216,11 +216,10 @@ ggsave("prism_error_means.pdf", plot= plot, width=12, height=4, units="in", dpi=
 # A subset of model were extracted across their time points at 3 different framerates: 3, 4 and 5 fps
 
 frame <- read.csv("../data/frameratetest.csv", header = TRUE)
-
 frame
 
 # Kruskal-Wallis test on frame rate
 frame.kw <- kruskal.test(total ~ frame.rate, data = frame)
 frame.kw
 # no differences in model area based on framerate
-write.csv(frame.kw, file = "Kruskal_framerate_outputs.csv")
+# copy output table to a csv file

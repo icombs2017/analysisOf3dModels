@@ -1,0 +1,4 @@
+"	Kruskal-Wallis",rank,sum,test,,,,,,
+,,,,,,,,,
+data:,total,by,frame.rate,,,,,,
+Kruskal-Wallis,chi-squared,=,"0.11862,",df,=,"2,",p-value,=,0.9424
