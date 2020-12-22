@@ -1,0 +1,4 @@
+"","statistic","p.value","method","data.name"
+"square.sqrt.norm",c(W = 0.975021139602355),0.000448000617970233,Shapiro-Wilk normality test,prism$square.diff.sqrt
+"rectangle.sqrt.norm",c(W = 0.947794178727167),2.11105939761662e-07,Shapiro-Wilk normality test,prism$rectangle.diff.sqrt
+"circle.sqrt.norm",c(W = 0.927842071095779),0.00178412742786716,Shapiro-Wilk normality test,prism$circle.diff.sqrt

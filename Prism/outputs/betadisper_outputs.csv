@@ -1,0 +1,10 @@
+Permutation,test,for,homogeneity,of,multivariate,dispersions,,,,,,,
+Permutation:,free,,,,,,,,,,,,
+Number,of,permutations:,9999,,,,,,,,,,
+,,,,,,,,,,,,,
+Response:,Distances,,,,,,,,,,,,
+,Df,Sum,Sq,Mean,Sq,F,N.Perm,Pr(>F),,,,,
+Groups,3,2.935,0.97847,5.9425,9999,5.00E-04,***,,,,,,
+Residuals,276,45.445,0.16466,,,,,,,,,,
+---,,,,,,,,,,,,,
+Signif.,codes:,0,Ô***Õ,0.001,Ô**Õ,0.01,Ô*Õ,0.05,Ô.Õ,0.1,Ô,Õ,1
