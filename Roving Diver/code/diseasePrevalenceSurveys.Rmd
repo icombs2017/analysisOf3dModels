@@ -107,7 +107,7 @@ head(rd)
 
 # Subsetting by Site
 ***
-For the purposes of reporting, you might want to block certain dates out, and only report on certain dates. Here, as an example, we are subsetting everything before July 3, 2019. This code can be modified to capture any time period you may need. We are calling it `rd.early` because it encapsulates the early days of our surveys. I am also subsetting for only our longterm monitoring sites. 
+ I am subsetting for only our longterm monitoring sites. 
 
 ```{r, subsetDate, include = TRUE}
 rd.site <- subset(rd, SiteCode %in% c("SEFL01", "SEFL02", "SEFL04", "SEFL05", "SEFL06", "SEFL08", "SEFL11", "SEFL12", "SLR North", "SLR South", "SLR Central", "SLR Ledge", "BC1", "T328", "FTL4")) 
@@ -193,9 +193,9 @@ We see that Jupiter and West Palm are significantly different from both St. Luci
 Now we are tabulating the data into a publication ready table.
 ```{r, prevalencePermTab, include = TRUE, ft.align = "left"}
 
-prevPermTab = data.frame("Test" = "PERMANOVA", "Comparison" = "County", "pseudo.F" = prev.perm$aov.tab$F.Model[1], "p.value" = prev.perm$aov.tab$`Pr(>F)`[1]) %>% 
+prevPermTab = data.frame("Test" = "PERMANOVA", "Comparison" = "Location", "pseudo.F" = prev.perm$aov.tab$F.Model[1], "p.value" = prev.perm$aov.tab$`Pr(>F)`[1]) %>% 
   add_row("Test" = " ", "Comparison" = "Date", "pseudo.F" = prev.perm$aov.tab$F.Model[2], "p.value" = prev.perm$aov.tab$`Pr(>F)`[2]) %>% 
-  add_row("Test" = " ", "Comparison" = "County:Date", "pseudo.F" = prev.perm$aov.tab$F.Model[3], "p.value" = prev.perm$aov.tab$`Pr(>F)`[3]) %>% 
+  add_row("Test" = " ", "Comparison" = "Location:Date", "pseudo.F" = prev.perm$aov.tab$F.Model[3], "p.value" = prev.perm$aov.tab$`Pr(>F)`[3]) %>% 
   add_row("Test" = c("Pairwise", replicate(nrow(prev.pairwise)-1,"")), "Comparison" = prev.pairwise$pairs, "pseudo.F" = prev.pairwise$F.Model, "p.value" = prev.pairwise$p.adjusted) %>%
   
 mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
@@ -291,6 +291,59 @@ ggsave("../figures/Fig3Revised.png", plot = county.prev, height = 5, width = 9, 
 <img src="../figures/Fig3Revised.png" width="425"/> 
 
 
+```{r, speciesData, include = TRUE}
+
+speciesData <- rd.site %>% dplyr::select(c(SiteCode, Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%  group_by(SiteCode, MonthYear, Location, SpeciesCode) %>% summarise_if(is.integer, sum)
+speciesData
+
+speciesData$Prevalence = speciesData$SCTLD/speciesData$TotalObservations
+head(speciesData)
+
+speciesData$nonSCTLDObvs <- speciesData$TotalObservations - speciesData$SCTLD
+speciesData
+
+ggplot(speciesData, aes(x = SpeciesCode, y = (TotalObservations < 500))) + geom_bar(stat = 'identity')
+
+speciesPlot1 <- ggplot(speciesData, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')+ facet_wrap( ~Location)
+
+speciesPlot1
+
+speciesPlot <- speciesPlot1 + theme(
+  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+  panel.background = element_rect(fill = '#F5F5F5'), 
+  plot.title = element_text(hjust = 0.5), 
+  axis.line = element_line(colour = "black"), 
+  axis.ticks = element_line(color="black"), 
+  text = element_text(size=20, color="black"), 
+  axis.text.x=element_text(angle = 45, hjust = 1, size=14, color="black"), 
+  axis.text.y=element_text(size=12, color="black")
+)
+
+speciesPlot
+speciesSLR <- subset(speciesData, Location == "SLR")
+speciesJUP <- subset(speciesData, Location == "JUP")
+speciesPB <- subset(speciesData, Location == "WPB")
+speciesPMP <- subset(speciesData, Location == "PMP")
+
+speciesPlotSLR <- ggplot(speciesSLR, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
+speciesPlotJUP <- ggplot(speciesJUP, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
+speciesPlotPB <- ggplot(speciesPB, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
+speciesPlotPMP <- ggplot(speciesPMP, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
+
+prev.species <- subset(speciesData, SpeciesCode == c("PCLI","AAGA","DSTO","OFAV","MCAV"))
+species.patch <- ((speciesPlotSLR + speciesPlotJUP) / (speciesPlotPB + speciesPlotPMP)) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 28))
+
+
+
+ggsave("../figures/Fig4.png", plot = box.plots.patch, width = 15, height = 5, units = "in", dpi = 600)
+
+
+speciesPlot1 <- ggplot(prev.species, aes(x = SpeciesCode, y = Prevalence))+geom_bar(stat = 'identity')+ facet_wrap( ~Location)
+
+
+
+```
 
 
 

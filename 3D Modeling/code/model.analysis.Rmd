@@ -42,7 +42,7 @@ For the following analyses we will require the use of a number of different R pa
 
 ```{r,packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load("ggplot2", "FSA", "officer", "gridExtra", "ggpubr", "Rmisc", "rcompanion", "RColorBrewer", "vegan", "nparcomp", "RVAideMemoire", "pairwiseAdonis", "PMCMR", "PMCMRplus", "patchwork", "magrittr","reshape2", "stringr", "dplyr", "flextable")
+pacman::p_load("ggplot2", "FSA", "officer", "gridExtra", "ggpubr", "Rmisc", "rcompanion", "RColorBrewer", "vegan", "nparcomp", "RVAideMemoire", "pairwiseAdonis", "PMCMR", "PMCMRplus", "patchwork", "magrittr","reshape2", "stringr", "dplyr", "flextable", "permuco")
 pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 
 ```
@@ -135,6 +135,16 @@ shapiro.disease
 # Friedman Rank Sum Test
 ***
 Performs a Friedman rank sum test with unreplicated blocked data on the three major area measurements: total colony area, healthy tissue area, and lesion area. 
+```{r, permutaionalRM, include = TRUE}
+set.seed(999)
+aov.total <- aovperm(total.colony.size ~ date*site+Error(colony.id/date), data = corr, np = 9999)
+aov.healhty <- aovperm(healthy.area ~ date*site+Error(colony.id/date), data = corr, np = 9999)
+aov.disease <- aovperm(disease.area ~ date*site+Error(colony.id/date), data = corr, np = 9999)
+aov.lesion <- aovperm(lesion.count ~ date*site+Error(colony.id/date), data = corr, np = 9999)
+
+pairwise
+
+```
 
 
 ```{r, Friedman, include = TRUE, results = "hide"}
@@ -637,6 +647,7 @@ align(align = "center", j = "p.value")
 spearLossDoc = read_docx()
 spearLossDoc = body_add_flextable(spearLossDoc, value = spearLossTab)
 print(spearLossDoc, target = "../tables/TableS3.docx")
+spearLossTab
 ```
 
 
@@ -704,4 +715,28 @@ ggsave("../figures/FigS2.png", plot= loss.panel, width=15, height=10, units="in"
 ```{r, loss.fig, fig.width = 15, fig.height = 10, echo = FALSE}
 loss.panel
 ```
+
+
+```{r, proportions, include = TRUE }
+prop <- read.csv("../data/prop.melt.csv", header = TRUE)
+prop$site = factor(prop$site, levels=unique(prop$site)) 
+class(prop$t1)
+prop$t1 = as.factor(prop$t1)
+levels(prop$t1)
+prop$t1 = factor(prop$t1, levels(prop$t1)[c(3, 4, 1, 2)])
+levels(prop$t1)
+
+shapiro.test(prop$proportion.of.total)
+
+ggplot(prop, aes(x =t1, y = proportion.of.total))+geom_boxplot()
+
+prop.aov.perm <- aovperm(proportion.of.total ~ t1*site+Error(colony.id/t1), data = prop, np = 9999)
+
+prop.pairwise <- pairwise.wilcox.test(prop$proportion.of.total, prop$t1, p.adjust.method = "bonferroni")
+
+```
+
+
+
+
 

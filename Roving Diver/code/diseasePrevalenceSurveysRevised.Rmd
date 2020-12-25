@@ -364,9 +364,9 @@ We see that Jupiter and West Palm are significantly different from both St. Luci
 Now we are tabulating the data into a publication ready table.
 ```{r, prevalencePermTab, include = TRUE, ft.align = "left"}
 
-prevPermTab = data.frame("Test" = "PERMANOVA", "Comparison" = "County", "pseudo.F" = prev.perm$aov.tab$F.Model[1], "p.value" = prev.perm$aov.tab$`Pr(>F)`[1]) %>% 
+prevPermTab = data.frame("Test" = "PERMANOVA", "Comparison" = "Location", "pseudo.F" = prev.perm$aov.tab$F.Model[1], "p.value" = prev.perm$aov.tab$`Pr(>F)`[1]) %>% 
   add_row("Test" = " ", "Comparison" = "Date", "pseudo.F" = prev.perm$aov.tab$F.Model[2], "p.value" = prev.perm$aov.tab$`Pr(>F)`[2]) %>% 
-  add_row("Test" = " ", "Comparison" = "County:Date", "pseudo.F" = prev.perm$aov.tab$F.Model[3], "p.value" = prev.perm$aov.tab$`Pr(>F)`[3]) %>% 
+  add_row("Test" = " ", "Comparison" = "Location:Date", "pseudo.F" = prev.perm$aov.tab$F.Model[3], "p.value" = prev.perm$aov.tab$`Pr(>F)`[3]) %>% 
   add_row("Test" = c("Pairwise", replicate(nrow(prev.pairwise)-1,"")), "Comparison" = prev.pairwise$pairs, "pseudo.F" = prev.pairwise$F.Model, "p.value" = prev.pairwise$p.adjusted) %>%
   
 mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
