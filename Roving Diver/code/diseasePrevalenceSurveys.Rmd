@@ -292,19 +292,71 @@ ggsave("../figures/Fig3Revised.png", plot = county.prev, height = 5, width = 9, 
 
 
 ```{r, speciesData, include = TRUE}
-
+#subsetting to include species data
 speciesData <- rd.site %>% dplyr::select(c(SiteCode, Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%  group_by(SiteCode, MonthYear, Location, SpeciesCode) %>% summarise_if(is.integer, sum)
 speciesData
 
+
+#adding prevalence data
 speciesData$Prevalence = speciesData$SCTLD/speciesData$TotalObservations
 head(speciesData)
 
-speciesData$nonSCTLDObvs <- speciesData$TotalObservations - speciesData$SCTLD
+# adding non-sctld observations as well
+speciesData$nonSCTLDObvservations <- speciesData$TotalObservations - speciesData$SCTLD
 speciesData
 
-ggplot(speciesData, aes(x = SpeciesCode, y = (TotalObservations < 500))) + geom_bar(stat = 'identity')
 
-speciesPlot1 <- ggplot(speciesData, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')+ facet_wrap( ~Location)
+# just looking at overall specices prevalence, not with 
+speciesPrev <- speciesData %>% 
+              select(c(Location, SpeciesCode, SCTLD, TotalObservations, nonSCTLDObvservations)) %>% 
+              group_by(Location,SpeciesCode) %>% 
+              summarise_if(is.integer, sum)
+speciesPrev$Prevalence = speciesPrev$SCTLD/speciesPrev$TotalObservations
+head(speciesPrev)
+
+
+
+
+speciesPrev <- arrange(speciesPrev, desc(Prevalence))
+speciesPrev <- arrange(speciesPrev, desc(TotalObservations))
+
+
+speciesPrev <- speciesData %>% 
+                select(c(SpeciesCode, SCTLD, TotalObservations)) %>% 
+                group_by(SpeciesCode) %>% 
+                summarise_if(is.integer, sum)
+speciesPrev$Prevalence = speciesPrev$SCTLD/speciesPrev$TotalObservations
+
+
+
+
+
+
+
+
+
+
+
+
+
+positivePrev <- subset(speciesPrev, Prevalence > 0)
+positivePrev <- subset(speciesPrev, TotalObservations < 500)
+mcavPrev <- subset(speciesData, SpeciesCode == "MCAV")
+
+
+ggplot(positivePrev, aes(x = SpeciesCode, y = Prevalence))+ 
+  geom_bar(stat = 'identity')+
+  facet_wrap(~Location, scales = "free")
+
+
+ggplot(positivePrev, aes(x = SpeciesCode, y = TotalObservations))+ 
+  geom_bar(stat = 'identity')+
+  facet_wrap(~Location, scales = "free")
+
+speciesPlot1 <- ggplot(speciesPrev, aes(x = SpeciesCode, y = TotalObservations))+ 
+  geom_bar(stat = 'identity')+
+  facet_wrap(~Location, scales = "free")
+
 
 speciesPlot1
 
@@ -320,15 +372,34 @@ speciesPlot <- speciesPlot1 + theme(
 )
 
 speciesPlot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 speciesSLR <- subset(speciesData, Location == "SLR")
 speciesJUP <- subset(speciesData, Location == "JUP")
 speciesPB <- subset(speciesData, Location == "WPB")
 speciesPMP <- subset(speciesData, Location == "PMP")
 
-speciesPlotSLR <- ggplot(speciesSLR, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
-speciesPlotJUP <- ggplot(speciesJUP, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
-speciesPlotPB <- ggplot(speciesPB, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
-speciesPlotPMP <- ggplot(speciesPMP, aes(x = SpeciesCode, y = TotalObservations))+geom_bar(stat = 'identity')
+speciesPlotSLR <- ggplot(speciesSLR, aes(x = SpeciesCode, y = TotalObservations))+
+  geom_bar(stat = 'identity')
+speciesPlotJUP <- ggplot(speciesJUP, aes(x = SpeciesCode, y = TotalObservations))+
+  geom_bar(stat = 'identity')
+speciesPlotPB <- ggplot(speciesPB, aes(x = SpeciesCode, y = TotalObservations))+
+  geom_bar(stat = 'identity')
+speciesPlotPMP <- ggplot(speciesPMP, aes(x = SpeciesCode, y = TotalObservations))+
+  (stat = 'identity')
 
 prev.species <- subset(speciesData, SpeciesCode == c("PCLI","AAGA","DSTO","OFAV","MCAV"))
 species.patch <- ((speciesPlotSLR + speciesPlotJUP) / (speciesPlotPB + speciesPlotPMP)) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a') & 
@@ -340,6 +411,48 @@ ggsave("../figures/Fig4.png", plot = box.plots.patch, width = 15, height = 5, un
 
 
 speciesPlot1 <- ggplot(prev.species, aes(x = SpeciesCode, y = Prevalence))+geom_bar(stat = 'identity')+ facet_wrap( ~Location)
+
+
+
+```
+```{r, abundance, include = TRUE}
+# We are exploring abundance data, we will do global abundance, and then abundance for each Location
+#subsetting to include species data
+speciesData <- rd.site %>% dplyr::select(c(SiteCode, Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%  group_by(SiteCode, MonthYear, Location, SpeciesCode) %>% summarise_if(is.integer, sum)
+speciesData
+
+
+#adding prevalence data
+speciesData$Prevalence = speciesData$SCTLD/speciesData$TotalObservations
+head(speciesData)
+
+# adding non-sctld observations as well
+speciesData$nonSCTLDObvservations <- speciesData$TotalObservations - speciesData$SCTLD
+speciesData
+
+
+# just looking at overall specices prevalence
+speciesPrev <- speciesData %>% 
+              select(c(Location, SpeciesCode, SCTLD, TotalObservations, nonSCTLDObvservations)) %>% 
+              group_by(Location,SpeciesCode) %>% 
+              summarise_if(is.integer, sum)
+speciesPrev$Prevalence = speciesPrev$SCTLD/speciesPrev$TotalObservations
+head(speciesPrev)
+
+#adding abundance to the speciesPrev dataframe by diving the total observations for each species by the total coral observations which is found by summing the TotalObservations column
+speciesPrev$abundance <- speciesPrev$TotalObservations/(sum(speciesPrev$TotalObservations))*100
+speciesPrev <- arrange(speciesPrev, desc(abundance))
+
+globalAbundance <- speciesData %>% 
+                    select(c(SpeciesCode, SCTLD, TotalObservations)) %>% 
+                    group_by(SpeciesCode)%>% 
+                    summarise_if(is.integer, sum)
+
+globalAbundance$Prevalence <- (globalAbundance$SCTLD / globalAbundance$TotalObservations)*100
+globalAbundance$abundance <- globalAbundance$TotalObservations / sum(globalAbundance$TotalObservations)*100
+globalAbundance <- arrange(globalAbundance, desc(abundance))
+
+kruskal.test(abundance ~ MonthYear, data = globalAbundance)
 
 
 
