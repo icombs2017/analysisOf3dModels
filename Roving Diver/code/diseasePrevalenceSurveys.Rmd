@@ -73,6 +73,7 @@ rd$MonthYear = format(as.Date(as.Date(rd$Date), format = "%y/%m/%d"), "%m-%y")
 rd$Date = as.Date(rd$Date)
 class(rd$Date)
 head(rd)
+
 ```
 We see that we have MonthYear at the end of the dataset and Date is now in a YYYY-MM-DD format.
 
@@ -114,6 +115,9 @@ rd.site <- subset(rd, SiteCode %in% c("SEFL01", "SEFL02", "SEFL04", "SEFL05", "S
 
 head(rd.site)
 tail(rd.site)
+rd.site$MonthYear <- as.factor(rd.site$MonthYear)
+rd.site$MonthYear = factor(rd.site$MonthYear, levels(rd.site$MonthYear)[c(10, 12, 3, 5,7,9,11,13,1,2,4,6,8)])
+
 ```
 Checking to see that we have our earliest date `head(rd.site)` and our cut-off date `tail(rd.site)` to confirm the subset worked.
 <br><br>
@@ -138,6 +142,7 @@ We want to calculate SCTLD disease prevalence at our monitoring sites. To do thi
 ```{r, prevalence, include = TRUE}
 locationData$Prevalence = locationData$SCTLD/locationData$TotalObservations
 head(locationData)
+
 
 ```
 You can see that we added a **Prevalence** column to the data set!
@@ -273,7 +278,7 @@ location.prev
 
 
 
-ggsave("../figures/Fig3Revised.png", plot = county.prev, height = 5, width = 9, units = 'in',dpi = 600)
+ggsave("../figures/Fig3.eps", plot = location.prev, height = 5, width = 9, units = 'in',dpi = 600)
 
 
 
@@ -415,51 +420,173 @@ speciesPlot1 <- ggplot(prev.species, aes(x = SpeciesCode, y = Prevalence))+geom_
 
 
 ```
+
+
+
+
+
 ```{r, abundance, include = TRUE}
-# We are exploring abundance data, we will do global abundance, and then abundance for each Location
-#subsetting to include species data
-speciesData <- rd.site %>% dplyr::select(c(SiteCode, Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%  group_by(SiteCode, MonthYear, Location, SpeciesCode) %>% summarise_if(is.integer, sum)
-speciesData
+
+slr <- rd.site %>%  
+  filter(Location == "SLR") %>% 
+  select(c(Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%
+  group_by(MonthYear, Location, SpeciesCode) %>% 
+  summarise_if(is.integer, sum) %>% 
+  mutate(abundance = (TotalObservations / sum(TotalObservations))*100) %>% 
+  mutate(Prevalence = (SCTLD / TotalObservations)*100)
 
 
-#adding prevalence data
-speciesData$Prevalence = speciesData$SCTLD/speciesData$TotalObservations
-head(speciesData)
+jup <- rd.site %>%  filter(Location == "JUP") %>% 
+  select(c(Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%  
+  group_by(MonthYear, Location, SpeciesCode) %>% 
+  summarise_if(is.integer, sum) %>% 
+  mutate(abundance = (TotalObservations / sum(TotalObservations))*100) %>% 
+  mutate(Prevalence = (SCTLD / TotalObservations)*100)
 
-# adding non-sctld observations as well
-speciesData$nonSCTLDObvservations <- speciesData$TotalObservations - speciesData$SCTLD
-speciesData
+pb <- rd.site %>%  filter(Location == "WPB") %>% 
+  select(c(Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%
+  group_by(MonthYear, Location, SpeciesCode) %>%
+  summarise_if(is.integer, sum) %>%
+  mutate(abundance = (TotalObservations / sum(TotalObservations))*100) %>%
+  mutate(Prevalence = (SCTLD / TotalObservations)*100)
 
+lbts <- rd.site %>%  filter(Location == "PMP") %>% 
+  select(c(Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%
+  group_by(MonthYear, Location, SpeciesCode) %>%
+  summarise_if(is.integer, sum) %>% 
+  mutate(abundance = (TotalObservations / sum(TotalObservations))*100) %>% 
+  mutate(Prevalence = (SCTLD / TotalObservations)*100)
 
-# just looking at overall specices prevalence
-speciesPrev <- speciesData %>% 
-              select(c(Location, SpeciesCode, SCTLD, TotalObservations, nonSCTLDObvservations)) %>% 
-              group_by(Location,SpeciesCode) %>% 
-              summarise_if(is.integer, sum)
-speciesPrev$Prevalence = speciesPrev$SCTLD/speciesPrev$TotalObservations
-head(speciesPrev)
-
-#adding abundance to the speciesPrev dataframe by diving the total observations for each species by the total coral observations which is found by summing the TotalObservations column
-speciesPrev$abundance <- speciesPrev$TotalObservations/(sum(speciesPrev$TotalObservations))*100
-speciesPrev <- arrange(speciesPrev, desc(abundance))
-
-globalAbundance <- speciesData %>% 
-                    select(c(SpeciesCode, SCTLD, TotalObservations)) %>% 
-                    group_by(SpeciesCode)%>% 
-                    summarise_if(is.integer, sum)
-
-globalAbundance$Prevalence <- (globalAbundance$SCTLD / globalAbundance$TotalObservations)*100
-globalAbundance$abundance <- globalAbundance$TotalObservations / sum(globalAbundance$TotalObservations)*100
-globalAbundance <- arrange(globalAbundance, desc(abundance))
-
-kruskal.test(abundance ~ MonthYear, data = globalAbundance)
+abund.df <- bind_rows(slr, jup, pb, lbts)
+abund.df$Location <- as.factor(abund.df$Location)
+abund.df$SpeciesCode <- as.factor(abund.df$SpeciesCode)
 
 
+
+
+
+
+
+
+
+
+
+kw.species <- kruskal.test(abundance ~ SpeciesCode, data = abund.df)
+dunn.species <- dunnTest(abundance ~ SpeciesCode, data = abund.df, method = 'bh')$res
+kw.Location <- kruskal.test(abundance ~ Location, data = abund.df)
+dunn.Location <- dunnTest(abundance ~ Location, data = abund.df, method = 'bh')$res
+kw.date <- kruskal.test(abundance ~ MonthYear, data = abund.df)
+dunn.date <- dunnTest(abundance ~ MonthYear, data = abund.df, method = 'bh')$res
+
+set.seed(999)
+abund.perm <- adonis(formula = abundance ~ Location*MonthYear, data = abund.df, method = "euclidian", permutations = 9999, na.rm = TRUE)
+abund.perm
+
+
+
+
+
+
+
+globalAbundance <- rd.site %>% 
+  select(c(SpeciesCode, SCTLD, TotalObservations)) %>%
+  group_by(SpeciesCode) %>%
+  summarise_if(is.integer, sum) %>% 
+  ungroup() %>% 
+  mutate(abundance = (TotalObservations / 5166)*100) %>% 
+  mutate(Prevalence = (SCTLD / TotalObservations)*100)
+
+
+
+
+
+
+
+slr.abund.plot <- ggplot(slr, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge", color = "black")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+jup.abund.plot <- ggplot(jup, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+pb.abund.plot <- ggplot(pb, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+lbts.abund.plot <- ggplot(lbts, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+
+abund.patch <- slr.abund.plot / jup.abund.plot / pb.abund.plot / lbts.abund.plot + plot_annotation(tag_levels = 'a')
+
+
+slr.prev.plot <- ggplot(slr, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+  ylim(0,100)
+jup.prev.plot <- ggplot(jup, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+    ylim(0,100)
+pb.prev.plot <- ggplot(pb, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+    ylim(0,100)
+lbts.prev.plot <- ggplot(lbts, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+  geom_bar(stat = 'identity', position = "dodge")+
+  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+  ylim(0,100)
+
+prev.patch <- slr.prev.plot / jup.prev.plot / pb.prev.plot / lbts.prev.plot + plot_annotation(tag_levels = 'a')
+
+
+eleven <- subset(jup, MonthYear == "12-17")
 
 ```
 
 
 
+```{r, topTen, include = TRUE}
+slr.top5 <- rd.site %>%  filter(Location == "SLR") %>% 
+  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+  group_by(Location, SpeciesCode) %>% 
+  summarise_if(is.integer, sum) %>% 
+  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+  arrange(desc(abundance)) %>% 
+  top_n(5, abundance)
 
+
+jup.top5 <- rd.site %>%  filter(Location == "JUP") %>% 
+  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+  group_by(Location, SpeciesCode) %>% 
+  summarise_if(is.integer, sum) %>% 
+  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+  arrange(desc(abundance))%>% 
+  top_n(5, abundance)
+ 
+
+pb.top5 <- rd.site %>%  filter(Location == "WPB") %>% 
+  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+  group_by(Location, SpeciesCode) %>% 
+  summarise_if(is.integer, sum) %>% 
+  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+  arrange(desc(abundance))%>% 
+  top_n(5, abundance)
+ 
+
+lbts.top5 <- rd.site %>%  filter(Location == "PMP") %>% 
+  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+  group_by(Location, SpeciesCode) %>% 
+  summarise_if(is.integer, sum) %>% 
+  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+  arrange(desc(abundance))%>% 
+  top_n(5, abundance)
+ 
+top5 <- bind_rows(slr.top5, jup.top5, pb.top5, lbts.top5)
+
+topTab <- top5 %>% flextable()
+topDoc = read_docx()
+topDoc = body_add_flextable(topDoc, value = topTab)
+print(topDoc, target = "../tables/Abundance.docx")
+topTab
+
+```
 
 
