@@ -86,9 +86,9 @@ rd$County = if_else(rd$SiteCode %in% c("SEFL01", "SEFL02", "SEFL03", "SLR South"
                        if_else(rd$SiteCode %in% c("T328", "BC1", "FTL4"), "Broward", "Palm Beach"))
 
 rd$Location= if_else(rd$SiteCode %in% c("SEFL01", "SEFL02", "SEFL03", "SLR South", "SLR Central", "SLR Ledge", "SLR North"), "SLR",
-                       if_else(rd$SiteCode %in% c("T328", "BC1", "FTL4"), "PMP",
+                       if_else(rd$SiteCode %in% c("T328", "BC1", "FTL4"), "LBTS",
                        if_else(rd$SiteCode %in% c("SEFL04", "SEFL05", "SEFL06"), "JUP",
-                       if_else(rd$SiteCode %in% c("SEFL08", "SEFL09", "SEFL10", "SEFL11", "SEFL12"), "WPB", ""))))
+                       if_else(rd$SiteCode %in% c("SEFL08", "SEFL09", "SEFL10", "SEFL11", "SEFL12"), "PB", ""))))
 head(rd)
 ```
 We can see that the **County** and **Location** columns have been added to the end of the data set!
@@ -349,34 +349,34 @@ positivePrev <- subset(speciesPrev, TotalObservations < 500)
 mcavPrev <- subset(speciesData, SpeciesCode == "MCAV")
 
 
-ggplot(positivePrev, aes(x = SpeciesCode, y = Prevalence))+ 
-  geom_bar(stat = 'identity')+
-  facet_wrap(~Location, scales = "free")
+# ggplot(positivePrev, aes(x = SpeciesCode, y = Prevalence))+ 
+#   geom_bar(stat = 'identity')+
+#   facet_wrap(~Location, scales = "free")
 
 
-ggplot(positivePrev, aes(x = SpeciesCode, y = TotalObservations))+ 
-  geom_bar(stat = 'identity')+
-  facet_wrap(~Location, scales = "free")
+# ggplot(positivePrev, aes(x = SpeciesCode, y = TotalObservations))+ 
+#   geom_bar(stat = 'identity')+
+#   facet_wrap(~Location, scales = "free")
+# 
+# speciesPlot1 <- ggplot(speciesPrev, aes(x = SpeciesCode, y = TotalObservations))+ 
+#   geom_bar(stat = 'identity')+
+#   facet_wrap(~Location, scales = "free")
 
-speciesPlot1 <- ggplot(speciesPrev, aes(x = SpeciesCode, y = TotalObservations))+ 
-  geom_bar(stat = 'identity')+
-  facet_wrap(~Location, scales = "free")
 
+#speciesPlot1
 
-speciesPlot1
+# speciesPlot <- speciesPlot1 + theme(
+#   panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
+#   panel.background = element_rect(fill = '#F5F5F5'), 
+#   plot.title = element_text(hjust = 0.5), 
+#   axis.line = element_line(colour = "black"), 
+#   axis.ticks = element_line(color="black"), 
+#   text = element_text(size=20, color="black"), 
+#   axis.text.x=element_text(angle = 45, hjust = 1, size=14, color="black"), 
+#   axis.text.y=element_text(size=12, color="black")
+# )
 
-speciesPlot <- speciesPlot1 + theme(
-  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
-  panel.background = element_rect(fill = '#F5F5F5'), 
-  plot.title = element_text(hjust = 0.5), 
-  axis.line = element_line(colour = "black"), 
-  axis.ticks = element_line(color="black"), 
-  text = element_text(size=20, color="black"), 
-  axis.text.x=element_text(angle = 45, hjust = 1, size=14, color="black"), 
-  axis.text.y=element_text(size=12, color="black")
-)
-
-speciesPlot
+# speciesPlot
 
 
 
@@ -394,28 +394,28 @@ speciesPlot
 
 speciesSLR <- subset(speciesData, Location == "SLR")
 speciesJUP <- subset(speciesData, Location == "JUP")
-speciesPB <- subset(speciesData, Location == "WPB")
-speciesPMP <- subset(speciesData, Location == "PMP")
+speciesPB <- subset(speciesData, Location == "PB")
+speciesPMP <- subset(speciesData, Location == "LBTS")
 
-speciesPlotSLR <- ggplot(speciesSLR, aes(x = SpeciesCode, y = TotalObservations))+
-  geom_bar(stat = 'identity')
-speciesPlotJUP <- ggplot(speciesJUP, aes(x = SpeciesCode, y = TotalObservations))+
-  geom_bar(stat = 'identity')
-speciesPlotPB <- ggplot(speciesPB, aes(x = SpeciesCode, y = TotalObservations))+
-  geom_bar(stat = 'identity')
-speciesPlotPMP <- ggplot(speciesPMP, aes(x = SpeciesCode, y = TotalObservations))+
-  (stat = 'identity')
-
-prev.species <- subset(speciesData, SpeciesCode == c("PCLI","AAGA","DSTO","OFAV","MCAV"))
-species.patch <- ((speciesPlotSLR + speciesPlotJUP) / (speciesPlotPB + speciesPlotPMP)) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag = element_text(size = 28))
-
-
-
-ggsave("../figures/Fig4.png", plot = box.plots.patch, width = 15, height = 5, units = "in", dpi = 600)
+# speciesPlotSLR <- ggplot(speciesSLR, aes(x = SpeciesCode, y = TotalObservations))+
+#   geom_bar(stat = 'identity')
+# speciesPlotJUP <- ggplot(speciesJUP, aes(x = SpeciesCode, y = TotalObservations))+
+#   geom_bar(stat = 'identity')
+# speciesPlotPB <- ggplot(speciesPB, aes(x = SpeciesCode, y = TotalObservations))+
+#   geom_bar(stat = 'identity')
+# speciesPlotPMP <- ggplot(speciesPMP, aes(x = SpeciesCode, y = TotalObservations))+
+#   (stat = 'identity')
+# 
+# prev.species <- subset(speciesData, SpeciesCode == c("PCLI","AAGA","DSTO","OFAV","MCAV"))
+# species.patch <- ((speciesPlotSLR + speciesPlotJUP) / (speciesPlotPB + speciesPlotPMP)) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a') & 
+#   theme(plot.tag = element_text(size = 28))
 
 
-speciesPlot1 <- ggplot(prev.species, aes(x = SpeciesCode, y = Prevalence))+geom_bar(stat = 'identity')+ facet_wrap( ~Location)
+
+#ggsave("../figures/Fig4.png", plot = box.plots.patch, width = 15, height = 5, units = "in", dpi = 600)
+
+
+# speciesPlot1 <- ggplot(prev.species, aes(x = SpeciesCode, y = Prevalence))+geom_bar(stat = 'identity')+ facet_wrap( ~Location)
 
 
 
@@ -443,14 +443,14 @@ jup <- rd.site %>%  filter(Location == "JUP") %>%
   mutate(abundance = (TotalObservations / sum(TotalObservations))*100) %>% 
   mutate(Prevalence = (SCTLD / TotalObservations)*100)
 
-pb <- rd.site %>%  filter(Location == "WPB") %>% 
+pb <- rd.site %>%  filter(Location == "PB") %>% 
   select(c(Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%
   group_by(MonthYear, Location, SpeciesCode) %>%
   summarise_if(is.integer, sum) %>%
   mutate(abundance = (TotalObservations / sum(TotalObservations))*100) %>%
   mutate(Prevalence = (SCTLD / TotalObservations)*100)
 
-lbts <- rd.site %>%  filter(Location == "PMP") %>% 
+lbts <- rd.site %>%  filter(Location == "LBTS") %>% 
   select(c(Location, County, MonthYear, SpeciesCode, SCTLD, TotalObservations)) %>%
   group_by(MonthYear, Location, SpeciesCode) %>%
   summarise_if(is.integer, sum) %>% 
@@ -471,121 +471,121 @@ abund.df$SpeciesCode <- as.factor(abund.df$SpeciesCode)
 
 
 
-kw.species <- kruskal.test(abundance ~ SpeciesCode, data = abund.df)
-dunn.species <- dunnTest(abundance ~ SpeciesCode, data = abund.df, method = 'bh')$res
-kw.Location <- kruskal.test(abundance ~ Location, data = abund.df)
-dunn.Location <- dunnTest(abundance ~ Location, data = abund.df, method = 'bh')$res
-kw.date <- kruskal.test(abundance ~ MonthYear, data = abund.df)
-dunn.date <- dunnTest(abundance ~ MonthYear, data = abund.df, method = 'bh')$res
-
-set.seed(999)
-abund.perm <- adonis(formula = abundance ~ Location*MonthYear, data = abund.df, method = "euclidian", permutations = 9999, na.rm = TRUE)
-abund.perm
-
-
-
-
-
-
-
-globalAbundance <- rd.site %>% 
-  select(c(SpeciesCode, SCTLD, TotalObservations)) %>%
-  group_by(SpeciesCode) %>%
-  summarise_if(is.integer, sum) %>% 
-  ungroup() %>% 
-  mutate(abundance = (TotalObservations / 5166)*100) %>% 
-  mutate(Prevalence = (SCTLD / TotalObservations)*100)
-
-
-
-
-
-
-
-slr.abund.plot <- ggplot(slr, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge", color = "black")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
-jup.abund.plot <- ggplot(jup, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
-pb.abund.plot <- ggplot(pb, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
-lbts.abund.plot <- ggplot(lbts, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
-
-abund.patch <- slr.abund.plot / jup.abund.plot / pb.abund.plot / lbts.abund.plot + plot_annotation(tag_levels = 'a')
-
-
-slr.prev.plot <- ggplot(slr, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
-  ylim(0,100)
-jup.prev.plot <- ggplot(jup, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
-    ylim(0,100)
-pb.prev.plot <- ggplot(pb, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
-    ylim(0,100)
-lbts.prev.plot <- ggplot(lbts, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
-  geom_bar(stat = 'identity', position = "dodge")+
-  scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+  ylim(0,100)
-
-prev.patch <- slr.prev.plot / jup.prev.plot / pb.prev.plot / lbts.prev.plot + plot_annotation(tag_levels = 'a')
-
-
-eleven <- subset(jup, MonthYear == "12-17")
+# kw.species <- kruskal.test(abundance ~ SpeciesCode, data = abund.df)
+# dunn.species <- dunnTest(abundance ~ SpeciesCode, data = abund.df, method = 'bh')$res
+# kw.Location <- kruskal.test(abundance ~ Location, data = abund.df)
+# dunn.Location <- dunnTest(abundance ~ Location, data = abund.df, method = 'bh')$res
+# kw.date <- kruskal.test(abundance ~ MonthYear, data = abund.df)
+# dunn.date <- dunnTest(abundance ~ MonthYear, data = abund.df, method = 'bh')$res
+# 
+# set.seed(999)
+# abund.perm <- adonis(formula = abundance ~ Location*MonthYear, data = abund.df, method = "euclidian", permutations = 9999, na.rm = TRUE)
+# abund.perm
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# globalAbundance <- rd.site %>% 
+#   select(c(SpeciesCode, SCTLD, TotalObservations)) %>%
+#   group_by(SpeciesCode) %>%
+#   summarise_if(is.integer, sum) %>% 
+#   ungroup() %>% 
+#   mutate(abundance = (TotalObservations / 5166)*100) %>% 
+#   mutate(Prevalence = (SCTLD / TotalObservations)*100)
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# slr.abund.plot <- ggplot(slr, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge", color = "black")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+# jup.abund.plot <- ggplot(jup, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+# pb.abund.plot <- ggplot(pb, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+# lbts.abund.plot <- ggplot(lbts, aes(x = MonthYear, y = abundance, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))
+# 
+# abund.patch <- slr.abund.plot / jup.abund.plot / pb.abund.plot / lbts.abund.plot + plot_annotation(tag_levels = 'a')
+# 
+# 
+# slr.prev.plot <- ggplot(slr, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+#   ylim(0,100)
+# jup.prev.plot <- ggplot(jup, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+#     ylim(0,100)
+# pb.prev.plot <- ggplot(pb, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+
+#     ylim(0,100)
+# lbts.prev.plot <- ggplot(lbts, aes(x = MonthYear, y = Prevalence, fill = SpeciesCode))+
+#   geom_bar(stat = 'identity', position = "dodge")+
+#   scale_x_discrete(name = "Month",limits=c("11-17","12-17","01-18", "04-18", "05-18", "06-18", "08-18", "11-18", "12-18", "02-19", "03-19", "04-19", "05-19", "06-19"), labels =c("Nov 17","Dec 17","Jan 18", "Apr 18", "May 18", "Jun 18", "Aug 18", "Nov 18", "Dec 18", "Feb 19", "Mar 19", "Apr 19", "May 19", "Jun 19"))+  ylim(0,100)
+# 
+# prev.patch <- slr.prev.plot / jup.prev.plot / pb.prev.plot / lbts.prev.plot + plot_annotation(tag_levels = 'a')
+# 
+# 
+# eleven <- subset(jup, MonthYear == "12-17")
 
 ```
 
 
 
 ```{r, topTen, include = TRUE}
-slr.top5 <- rd.site %>%  filter(Location == "SLR") %>% 
-  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
-  group_by(Location, SpeciesCode) %>% 
-  summarise_if(is.integer, sum) %>% 
-  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
-  arrange(desc(abundance)) %>% 
-  top_n(5, abundance)
-
-
-jup.top5 <- rd.site %>%  filter(Location == "JUP") %>% 
-  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
-  group_by(Location, SpeciesCode) %>% 
-  summarise_if(is.integer, sum) %>% 
-  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
-  arrange(desc(abundance))%>% 
-  top_n(5, abundance)
- 
-
-pb.top5 <- rd.site %>%  filter(Location == "WPB") %>% 
-  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
-  group_by(Location, SpeciesCode) %>% 
-  summarise_if(is.integer, sum) %>% 
-  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
-  arrange(desc(abundance))%>% 
-  top_n(5, abundance)
- 
-
-lbts.top5 <- rd.site %>%  filter(Location == "PMP") %>% 
-  select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
-  group_by(Location, SpeciesCode) %>% 
-  summarise_if(is.integer, sum) %>% 
-  mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
-  arrange(desc(abundance))%>% 
-  top_n(5, abundance)
- 
-top5 <- bind_rows(slr.top5, jup.top5, pb.top5, lbts.top5)
-
-topTab <- top5 %>% flextable()
-topDoc = read_docx()
-topDoc = body_add_flextable(topDoc, value = topTab)
-print(topDoc, target = "../tables/Abundance.docx")
-topTab
+# slr.top5 <- rd.site %>%  filter(Location == "SLR") %>% 
+#   select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+#   group_by(Location, SpeciesCode) %>% 
+#   summarise_if(is.integer, sum) %>% 
+#   mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+#   arrange(desc(abundance)) %>% 
+#   top_n(5, abundance)
+# 
+# 
+# jup.top5 <- rd.site %>%  filter(Location == "JUP") %>% 
+#   select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+#   group_by(Location, SpeciesCode) %>% 
+#   summarise_if(is.integer, sum) %>% 
+#   mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+#   arrange(desc(abundance))%>% 
+#   top_n(5, abundance)
+#  
+# 
+# pb.top5 <- rd.site %>%  filter(Location == "PB") %>% 
+#   select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+#   group_by(Location, SpeciesCode) %>% 
+#   summarise_if(is.integer, sum) %>% 
+#   mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+#   arrange(desc(abundance))%>% 
+#   top_n(5, abundance)
+#  
+# 
+# lbts.top5 <- rd.site %>%  filter(Location == "LBTS") %>% 
+#   select(c(Location, SpeciesCode, SCTLD, TotalObservations)) %>%  
+#   group_by(Location, SpeciesCode) %>% 
+#   summarise_if(is.integer, sum) %>% 
+#   mutate(abundance = round((TotalObservations / sum(TotalObservations))*100, digits = 2)) %>% 
+#   arrange(desc(abundance))%>% 
+#   top_n(5, abundance)
+#  
+# top5 <- bind_rows(slr.top5, jup.top5, pb.top5, lbts.top5)
+# 
+# topTab <- top5 %>% flextable()
+# topDoc = read_docx()
+# topDoc = body_add_flextable(topDoc, value = topTab)
+# print(topDoc, target = "../tables/Abundance.docx")
+# topTab
 
 ```
 

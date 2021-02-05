@@ -475,7 +475,7 @@ align(align = "center", j = "p.value") %>%
 align(align = "center", j = "TestStatistic")
 lossKwDoc = read_docx()
 lossKwDoc = body_add_flextable(lossKwDoc, value = lossKwTab)
-print(lossKwDoc, target = "../tables/TableS2.docx")
+print(lossKwDoc, target = "../tables/TableS1.docx")
 lossKwTab
 ```
 
