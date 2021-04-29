@@ -2,11 +2,11 @@ Roving Diver Disease Surveys
 ==========================================
 
 
-### Ian Combs -- <icombs2017@fau.edu>
-### version: May 21, 2020
+### Ian Combs -- <combsi9892@gmail.com>
+### version: April 29, 2021
 
 ------------------------------------------------------------------------
-This repository contains scripts and data associated with the roving diver disease monitoring surveys found in Combs et al. 2021.
+This repository contains scripts and data associated with the roving diver disease monitoring surveys found in **Combs IR, Studivan MS, Eckert RJ, Voss JD. 2021. Quantifying the impacts of stony coral tissue loss disease on corals in Southeast Florida through surveys and 3D photogrammetry**
 
 ------------------------------------------------------------------------
 ### Analysis and walkthroughs accompanying this repository:

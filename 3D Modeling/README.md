@@ -4,10 +4,10 @@
 
 
 ### Ian Combs -- <combsi9892@gmail.com>
-### version: May 29, 2021
+### version: April 29, 2021
 
 ------------------------------------------------------------------------
-This repository contains protocols, scripts, and data associated with the 3D model generation and analysis of fate-tracked *Montastraea cavernosa* colonies within Broward County, FL.
+This repository contains protocols, scripts, and data associated with the 3D model generation and analysis of fate-tracked *Montastraea cavernosa* colonies within Broward County, FL. Found in **Combs IR, Studivan MS, Eckert RJ, Voss JD. 2021. Quantifying the impacts of stony coral tissue loss disease on corals in Southeast Florida through surveys and 3D photogrammetry**
 
 ------------------------------------------------------------------------
 ### Analysis and walkthroughs accompanying this repository:
@@ -45,7 +45,7 @@ This repository contains protocols, scripts, and data associated with the 3D mod
 - tables/
   - *Table2.docx* -- table of Friedman's test and pairwise comparison outputs for surface area measurements
   - *TableS1.docx* -- table of Kruskal-Wallis and pairwise comparison outputs for lesion count and site
-  
+
 
 - *gitignore* -- .gitignore
 - *README.md* -- Repository readme document
