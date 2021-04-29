@@ -20,6 +20,7 @@ library(magrittr)
 
 #### version: `r Sys.Date() %>%  format(format = "%B %d, %Y")`
 
+[![DOI](https://zenodo.org/badge/255665897.svg)](https://zenodo.org/badge/latestdoi/255665897)
 
 
 #### [GitHub repository](https://github.com/icombs2017/analysisOf3dModels/tree/master/Roving%20Diver){target="_blank"}

@@ -19,8 +19,8 @@ library(magrittr)
 
 ### version: `r Sys.Date() %>% format(format="%B %d, %Y")`
 
-<!-- this is where the DOI would go  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3675991.svg)](https://doi.org/10.5281/zenodo.3675991)
--->
+[![DOI](https://zenodo.org/badge/255665897.svg)](https://zenodo.org/badge/latestdoi/255665897)
+
 
 
 #### [GitHub repository](https://github.com/icombs2017/analysisOf3dModels.git){target="_blank"}
