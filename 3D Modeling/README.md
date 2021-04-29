@@ -3,8 +3,8 @@
 ==========================================
 
 
-### Ian Combs -- <icombs2017@fau.edu>
-### version: May 21, 2020
+### Ian Combs -- <combsi9892@gmail.com>
+### version: May 29, 2021
 
 ------------------------------------------------------------------------
 This repository contains protocols, scripts, and data associated with the 3D model generation and analysis of fate-tracked *Montastraea cavernosa* colonies within Broward County, FL.
@@ -23,14 +23,18 @@ This repository contains protocols, scripts, and data associated with the 3D mod
   - *fateTracking.Rproj* -- R project file
 
 - data/
-  - *fateTrackingSurfaceArea.csv* -- surface Area datasheet for importing into R
+  - *S2_Dataset.csv* -- surface Area datasheet for importing into R
 
 - figures/
   - *Fig1.png* -- figure of coral colony, 3d model, and typical SCTLD manifestations
   - *Fig2.eps* -- map of study sites
-  - *Fig4.png* -- box plot of tissue areas
-  - *FigS2.png* -- box plot and correlation plot of tissue loss metrics
-  - *FigS3.png* -- correlation plots of various tissue metrics
+  - *Fig2.png* -- map of study sites
+  - *Fig4.png* -- box plot of tissue areas through time
+  - *Fig4.eps* -- box plot of tissue areas through time
+  - *Fig5.png* -- box plot and correlation plot of tissue loss metrics
+  - *Fig5.eps* -- box plot and correlation plot of tissue loss metrics
+  - *Fig6.png* -- Correlation plot of Disease lesion area and total colony area
+  -*Fig6.eps* -- Correlation plot of Disease lesion area and total colony area
 
 - protocols/
   - *3D_modeling_README* -- protocol for filming, rendering, and analyzing 3D Models
@@ -40,9 +44,8 @@ This repository contains protocols, scripts, and data associated with the 3D mod
 
 - tables/
   - *Table2.docx* -- table of Friedman's test and pairwise comparison outputs for surface area measurements
-  - *TableS1.docx* -- table of Kruskal-Wallis and pairwise comparisoon outputs for lesion count and site
-  - *TableS2.docx* -- table of Kruskal-Wallis outputs for Rate of Tissue loss vs time
-  - *TableS3.docx* -- table showing Spearman's Rank Correlation of Rate of Tissue Loss and total colony size
+  - *TableS1.docx* -- table of Kruskal-Wallis and pairwise comparison outputs for lesion count and site
+  
 
 - *gitignore* -- .gitignore
 - *README.md* -- Repository readme document

@@ -1,5 +1,5 @@
 ---
-title: "3D Model Analysis of Fate-tracked M. cavernosa colonies"
+title: "3D Model Analysis of Fate-tracked *M. cavernosa* colonies"
 author: "Ian Combs -- icombs2017@fau.edu"
 output:
   html_document:
@@ -53,7 +53,7 @@ pacman::p_load_gh("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 Loading the dataset into R, and subsetting as needed, we will be making multiple subsets, subsetting by time point and by site to make things easier to workwith. 
 
 ```{r, load and subset, include = TRUE, results = "hide"}
-corr <- read.csv("../data/fateTrackingSurfaceArea.csv", header = T)
+corr <- read.csv("../data/S2_Dataset.csv", header = T)
 str(corr)
 head(corr)
 
@@ -255,12 +255,12 @@ friedTab
 ***
 Multiple correlation analyses were carried out to see how different colony metrics affected disease manifestation and progress. 
 
-```{r, correlation analyses, warning = FALSE, include = TRUE}
+```{r, correlation analyses, warning = FALSE, include = TRUE, results = TRUE}
 
 # Looking at correlation between total colony size and disease lesion area
 
 colonysize.vs.lesionarea <- cor.test(corr$total.colony.size,corr$disease.area, method="spearman", use="complete.obs")
-
+colonysize.vs.lesionarea
 
 
 ```
@@ -372,6 +372,8 @@ disease.area.box
 box.plots.patch <- (total.colony.box | healthy.colony.box | disease.area.box) + plot_layout(guides = 'collect') + plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 28))
 ggsave("../figures/Fig4.eps", plot = box.plots.patch, width = 15, height = 5, units = "in", dpi = 600)
+ggsave("../figures/Fig4.png", plot = box.plots.patch, width = 15, height = 5, units = "in", dpi = 600)
+
 ```
 ```{r, patch.box.plot, echo = FALSE, fig.width = 15, fig.height = 5}
 box.plots.patch
@@ -408,6 +410,7 @@ colony.size.disease.area
 
 ```{r, patch.correlation, include = TRUE}
 correlation.plots.patch <- (colony.size.disease.area / guide_area() + plot_layout(nrow = 2, guides = 'collect', heights = c(5,1)))
+ggsave("../figures/Fig6.png", plot = correlation.plots.patch, width = 5, height = 5, units = "in", dpi = 600)
 ggsave("../figures/Fig6.eps", plot = correlation.plots.patch, width = 5, height = 5, units = "in", dpi = 600)
 ```
 ```{r, corr.plots, echo = FALSE, fig.width = 20, fig.height = 10}
@@ -493,30 +496,6 @@ Correlation analyses were run on rates of loss and various colony metrics.
 corr.loss.spear <- cor.test(corr.loss$loss, corr.loss$total.colony.size, method = 'spearman', use = 'complete.obs')
 ```
 
-```{r, correlationTab, include = TRUE}
-spearLossTab = data.frame("Data" = "Rate of Tissue Loss", "Test" = "Spearman's Rank Correlation", "Comparison" = "T1-T2 ", "rho" = spear.t2[["estimate"]][["rho"]], "p.value" = spear.t2$p.value) %>% 
-  add_row("Data" = " ", "Test" = " ", "Comparison" = "T2-T3", "rho" = spear.t3[["estimate"]][["rho"]], "p.value" = spear.t3$p.value) %>% 
-  add_row("Data" = " ", "Test" = " ", "Comparison" = "T3-T4", "rho" = spear.t4[["estimate"]][["rho"]], "p.value" = spear.t4$p.value) %>% 
-  
-mutate(p.value = replace(p.value, p.value >= 0.05, NA)) %>%
-flextable() %>%
-set_header_labels(Data.set = "Data") %>% 
-flextable::compose(part = "header", j = "rho", value = as_paragraph("𝜌")) %>%
-flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
-autofit() %>%
-font(fontname = "Times New Roman", part = "all") %>%
-fontsize(size = 12, part = "all") %>%
-bold(part = "header") %>% 
-colformat_num(j = "rho", digits = 3) %>%
-colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
-align(align = "center", j = "p.value")
-
-spearLossDoc = read_docx()
-spearLossDoc = body_add_flextable(spearLossDoc, value = spearLossTab)
-print(spearLossDoc, target = "../tables/TableS3.docx")
-spearLossTab
-```
-
 
 # Visualizing rates of loss
 ***
@@ -535,8 +514,8 @@ loss.box.1 <- ggplot(data = corr.loss, aes(x = date, y = loss))+
   scale_y_continuous(labels = scale)+
   theme(legend.title = element_blank(),
         legend.text = element_text(color = "black", size = 25),
-        legend.background = element_blank())
-  #facet_grid(.~site,scales="free")
+        legend.background = element_blank())+
+  facet_grid(.~site,scales="free")
 loss.box.1
 loss.box <- loss.box.1 + theme(
   panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
@@ -545,7 +524,7 @@ loss.box <- loss.box.1 + theme(
   axis.line = element_line(colour = "black"), 
   axis.ticks = element_line(color="black"), 
   text = element_text(size=15, color="black"), 
-  axis.text.x=element_text(size=20, color="black"), 
+  axis.text.x=element_text(size=15, color="black", angle = 90), 
   axis.text.y=element_text(size=20, color="black"),
   axis.title.y = element_text(size =25, color = 'black'),
   axis.title.x = element_text(size = 25, color = 'black'))+
@@ -576,13 +555,16 @@ colony.size.loss
 
 loss.panel <- loss.box + colony.size.loss + guide_area()+ plot_layout(nrow = 1, guides = 'collect', widths = c(5,5,1)) + plot_annotation(tag_levels = 'a')
 
+ggsave("../figures/Fig5.png", plot= loss.panel, width=15, height=10, units="in", dpi=600)
 ggsave("../figures/Fig5.eps", plot= loss.panel, width=15, height=10, units="in", dpi=600)
 
 ```
 ```{r, loss.fig, fig.width = 15, fig.height = 10, echo = FALSE}
 loss.panel
 ```
-
+# Proportion of Loss
+***
+Proportions of loss were calculated for each time point and for total colony area, healthy tissue, and disease area, to understand the average proportion of tissue lost throughout the study. 
 
 ```{r, proportions, include = TRUE }
 prop <- read.csv("../data/prop.melt.csv", header = TRUE)
@@ -603,105 +585,6 @@ prop.loss$loss <- 1-prop.loss$proportion.of.total
 
 prop.losst4 <- subset(prop.loss, t1 == "12.17.18")
 
-shapiro.test(prop$loss)
-
-loss.prop <- friedmanTest(y = prop$loss, groups = prop$t1, blocks = prop$colony.id)
-loss.prop
-
-post.prop <- posthoc.friedman.nemenyi.test(loss ~ t1 | colony.id, data = prop) 
-prop.total.p.adjust <- p.adjust(post.prop[["p.value"]], method = "bonferroni")
-
-# Making a string of the test statistic and melting 
-# it into a column for making tables later
-prop.post.total.statistic = c(4.269075, 7.589466,9.012491, 3.320392, 4.743416, 1.423025)
-prop.post.total.statistic.melt = melt(prop.post.total.statistic, id = 1)
-
-#taking pvalues from Nemenyi test and manually correcting them
-prop.total.val <- c(1.353866e-02,4.801309e-07, 1.113335e-09, 0.087466386, 0.004426398, 0.7457724 )
-
-# Using a bonferroni correction
-prop.adjust.total.val <- p.adjust(prop.total.val, method = 'bonferroni')
-
-# Now we are melting this vector (changing it from a row to a column) 
-# so we can incorporate into a table later on
-prop.p.total.melt <- melt(adjust.total.val, id=1)
-
-
-
-
-```
-
-```{r, propTable, include = TRUE, ft.align = "left"}
-propTab = data.frame("Test" = "Proportion of Tissue Lost", "Comparison" = " ", "Statistic" = loss.prop[["statistic"]][["Friedman chi-squared"]], "p.value" = loss.prop$p.value[1]) %>% 
-  add_row("Test" = " ", "Comparison" = c("T1 - T2", "T1 - T3", "T1 - T4", "T2 - T3", "T2 - T4", "T3 - T4"), "Statistic" = prop.post.total.statistic.melt$value, "p.value" = prop.p.total.melt$value) %>% 
-
-
-mutate_if(is.numeric, round, digits = 3) %>%     
-mutate(p.value = replace(p.value, p.value >= 0.05, "ns")) %>%
-mutate(p.value = replace(p.value, p.value < 0.001, "< 0.001")) %>% 
-mutate_if(is.character, str_replace_all, pattern = "-", replacement = "–") %>%
-flextable() %>%
-set_header_labels(Data.set = "Data set") %>% 
-flextable::compose(part = "header", j = "Statistic", value = as_paragraph("Test Statistic")) %>%
-flextable::compose(part = "header", j = "p.value", value = as_paragraph(as_i("p"), "-value")) %>% 
-autofit() %>%
-font(fontname = "Times New Roman", part = "all") %>%
-fontsize(size = 12, part = "all") %>%
-bold(part = "header") %>% 
-colformat_num(j = "Statistic", digits = 2) %>%
-colformat_num(j = "p.value", digits = 4, na_str = "ns") %>% 
-align_nottext_col(align = "center", header = TRUE, footer = TRUE) %>% 
-align(align = "center", j = "p.value")
-
-propDoc = read_docx()
-propDoc = body_add_flextable(propDoc, value = propTab)
-print(propDoc, target = "../tables/TableProp.docx")
-propTab
-```
-
-```{r, proportion Loss fig, include = TRUE}
-
-# This forces y axis labels to have 1 decimal place.
-scale <- function(x) sprintf("%.0f", x)
-# Plotting a boxplot of mean total colony size for each site at each timepoint. 
-prop.total.box.1 <-
-  ggplot(prop.loss, aes(x = t1, y = loss))+
-  geom_boxplot(aes(fill = site), alpha = 1, outlier.shape = NA, color = "black") +
-  geom_point(aes(fill = site), color = "black", size = 1.75, position = position_jitterdodge()) +
-  scale_fill_manual(values = c("#7BA46C", "#EACF9E", "#008D91")) +
-  scale_x_discrete(labels = c(expression('T'[2]), expression('T'[3]), expression('T'[4])))+
-  labs(x = "Time", y = bquote("Proportion Lost"),fill = 'Site') +
-  # scale_y_continuous(labels = scale)+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(color = "black", size = 18),
-        legend.background = element_blank(),
-        legend.position = "bottom")+
-  facet_grid(.~site,scales="free")
-
-prop.total.box <- prop.total.box.1 + theme(
-  panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),
-  panel.background = element_rect(fill = '#F5F5F5'),
-  plot.title = element_text(hjust = 0.5), 
-  axis.line = element_line(colour = "black"), 
-  axis.ticks = element_line(color="black"), 
-  text = element_text(size = 22, color="black"), 
-  axis.text.x=element_text(size = 18, color="black"), 
-  axis.text.y=element_text(size = 18, color="black"),
-  legend.position = "none")
-
-prop.total.box
-
-
-
-ggplot(prop.loss, aes(x = t1, y = loss))+geom_boxplot()
-ggplot(prop, aes(x = t1, y = loss))+geom_boxplot()
-
-
-```
-
-
-
-```{r}
 prop.losst2 <- subset(prop.loss, t1 == "9.11.18")
 prop.losst3 <- subset(prop.loss, t1 == "11.8.18")
 prop.losst4 <- subset(prop.loss, t1 == "12.17.18")

@@ -6,7 +6,7 @@ Roving Diver Disease Surveys
 ### version: May 21, 2020
 
 ------------------------------------------------------------------------
-This repository contains scripts and data associated with long-term disease monitoring throughout the Northern Florida Reef Tract (NRFT).
+This repository contains scripts and data associated with the roving diver disease monitoring surveys found in Combs et al. 2021.
 
 ------------------------------------------------------------------------
 ### Analysis and walkthroughs accompanying this repository:
@@ -22,10 +22,11 @@ This repository contains scripts and data associated with long-term disease moni
   - *diseasePrevalenceSurveys.Rproj* -- R project file
 
 - data/
-  - *RovingDiverSurveysManuscript.xlsx* -- disease prevalence data used in analysis
+  - *S1_Dataset.xlsx* -- disease prevalence data used in analysis
 
 - figures/
-  - *Fig3.png* -- plot of average disease prevalence at all there counties over time
+  - *Fig3.png* -- plot of average disease prevalence at all there counties over time saved in .png format
+  - *Fig3.eps* -- plot of average disease prevalence at all there counties over time saved in .eps format
 
 - tables/
   - *Table1.docx* -- results of PERMANOVA and pairwise comparisons for disease prevalence over site and time
